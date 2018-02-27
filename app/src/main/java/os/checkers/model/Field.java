@@ -36,20 +36,29 @@ public class Field implements Serializable {
 
     }
 
+    public Field(Field field){
+        for (int i = 0; i <field.size() ; i++) {
+            for (int j= 0; j<field.size();j++){
+                this.field[i][j] = field.get(CoordinateImpl.get(i, j));
+                this.player = field.getPlayer();
+            }
+        }
+    }
+
     public Square get(Coordinate coordinate) {
         return field[coordinate.getRow()][coordinate.getColumn()];
     }
 
     private void initFieldWithSquares() {
         Color squareColorStartedCurrent = player;
-        for (int i = 0; i < length(); i++) {
+        for (int i = 0; i < size(); i++) {
             squareColorStartedCurrent = squareColorStartedCurrent.getNext();
-            for (int j = 0; j < length(); j++) {
+            for (int j = 0; j < size(); j++) {
                 Color upgradeToKingThisColor;
                 if (i == 0) {
 //                    upgrade to King on this line for #player.getNext() color
                     upgradeToKingThisColor = player.getNext();
-                } else if (i == length() - 1) {
+                } else if (i == size() - 1) {
 //                    upgrade to King on this line for #player color
                     upgradeToKingThisColor = player;
                 } else {
@@ -74,7 +83,7 @@ public class Field implements Serializable {
             endRow = i;
         }
         for (int i = startRow; i <= endRow; i++) {
-            for (int j = 0; j < length(); j++) {
+            for (int j = 0; j < size(); j++) {
                 if (i % 2 == j % 2) {
                     field[i][j].setChecker(new Checker(color));
                 }
@@ -82,7 +91,7 @@ public class Field implements Serializable {
         }
     }
 
-    public int length() {
+    public int size() {
         return field.length;
     }
 

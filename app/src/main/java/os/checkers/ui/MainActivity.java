@@ -50,7 +50,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 //        mainLayoutId = fieldLayout.getId();
         linearLayout.addView(fieldLayout);
         assert field != null;
-        fieldLayout.spawn(getSize() / field.length(), field, this);
+        fieldLayout.spawn(getSize() / field.size(), field, this);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                     selectedSquare.add((ViewWithChecker) v);
                     vwc.setSelected(true);
                 }
-            } else if (field.isAllowed(
+            } else if (!selectedSquare.contains(v) && field.isAllowed(
                     selectedSquare.get(selectedSquare.size() - 1).getCoordinate(), //from
                     vwc.getCoordinate(), //to
                     field.get(selectedSquare.get(0).getCoordinate()).getChecker())) {//checker
@@ -110,7 +110,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 //                    selectedSquare.setSelected(false);
 //                    selectedSquare = null;
 //                    MainLayout mainLayout = ((MainLayout) findViewById(mainLayoutId));
-//                    mainLayout.spawn(getSize() / field.length(), field, this);
+//                    mainLayout.spawn(getSize() / field.size(), field, this);
 //                } else {
 //
 //                }
@@ -127,7 +127,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     public void restart(View view) {
         field = null;
         getMainLayout();
-//        ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.length(), field, this);
+//        ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.size(), field, this);
     }
 
     public void save(View view) {
@@ -144,7 +144,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             field = Field.fromJson(prefs.getString("board", ""));
             player = Color.valueOf(prefs.getString("player", ""));
             getMainLayout();
-//            ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.length(), field, this);
+//            ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.size(), field, this);
         }
     }
 
