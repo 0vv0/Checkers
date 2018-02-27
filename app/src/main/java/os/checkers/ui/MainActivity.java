@@ -1,4 +1,4 @@
-package os.checkers.android;
+package os.checkers.ui;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -1,6 +1,7 @@
 package os.checkers.model;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -12,12 +13,18 @@ public class Field implements Serializable {
     private Square[][] field = new Square[Coordinate.MAX_LENGTH][Coordinate.MAX_LENGTH];
     private Color player = Color.White;
 
+    private static Gson getGson(){
+        return new GsonBuilder()
+                .registerTypeAdapter(Coordinate.class, new InterfaceAdapter<Coordinate>())
+                .create();
+    }
+
     public String getJson() {
-        return new Gson().toJson(this);
+        return getGson().toJson(this);
     }
 
     public static Field fromJson(String serializedToString) {
-        return new Gson().fromJson(serializedToString, Field.class);
+        return getGson().fromJson(serializedToString, Field.class);
     }
 
     public Field() {

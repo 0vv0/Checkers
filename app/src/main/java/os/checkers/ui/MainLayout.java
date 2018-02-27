@@ -1,4 +1,4 @@
-package os.checkers.android;
+package os.checkers.ui;
 
 import android.content.Context;
 import android.widget.GridLayout;
