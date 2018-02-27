@@ -49,13 +49,13 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 //        fieldLayout.setId(fieldLayout.hashCode());
 //        mainLayoutId = fieldLayout.getId();
         linearLayout.addView(fieldLayout);
-        assert field!=null;
+        assert field != null;
         fieldLayout.spawn(getSize() / field.length(), field, this);
     }
 
     @Override
     public void onClick(final View v) {
-        final ViewWithChecker vwc = (ViewWithChecker)v;
+        final ViewWithChecker vwc = (ViewWithChecker) v;
         Coordinate coordinate = vwc.getCoordinate();
 //        TextView tv = (TextView) findViewById(R.id.messageBox);
 //        tv.setText(field.getAllowedMovesFor(coordinate).toString());
@@ -70,7 +70,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 //                        field.get(coordinate).getChecker() != null//only squares with checkers
 //                                && field.get(coordinate).getChecker().getColor() == field.getPlayer()//only checkers of our color
                         ) {
-                    selectedSquare.add((ViewWithChecker)v);
+                    selectedSquare.add((ViewWithChecker) v);
                     vwc.setSelected(true);
                 }
             } else if (field.isAllowed(
@@ -79,10 +79,20 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                     field.get(selectedSquare.get(0).getCoordinate()).getChecker())) {//checker
                 selectedSquare.add(vwc);
                 vwc.setSelected(true);
+                if (selectedSquare.size()==2 &&
+                        Math.abs(selectedSquare.get(0).getCoordinate().getRow()-selectedSquare.get(1).getCoordinate().getRow())==1
+                        ) {
+                    move(v);
+                }
             }
         }
-
-
+        if (selectedSquare.size() > 1 &&
+                !field.hasAllowedMoves(
+                        selectedSquare.get(selectedSquare.size() - 1).getCoordinate(),
+                        field.get(selectedSquare.get(0).getCoordinate()).getChecker()
+                )) {
+            move(v);
+        }
 //        if (selectedSquare == null) {
 //            if (field.get(coordinate).isBlack()//only black squares
 //                    && field.get(coordinate).getChecker() != null//only squares with checkers
@@ -106,7 +116,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 //                }
 //            }
 //        }
-
     }
 
     public void exit(View view) {
@@ -139,7 +148,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         }
     }
 
-    public void clearSave(View v){
+    public void clearSave(View v) {
         SharedPreferences.Editor editor = getSharedPreferences("mPrefs", MODE_PRIVATE).edit();
         editor.clear();
         editor.apply();

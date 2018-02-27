@@ -135,6 +135,20 @@ public class Field implements Serializable {
         return getAllowedMovesFor(coordinate).size()>0;
     }
 
+    public boolean hasAllowedMoves(Coordinate coordinate, Checker checker) {
+
+        return checker!=null && getAllowedMovesFor(coordinate, checker).size()>0;
+    }
+
+    private List<Coordinate> getAllowedMovesFor(Coordinate from, Checker checker) {
+        List<Coordinate> coordinates = from.getDiagonals();
+//        coordinates.removeIf(coord->isAllowed(from, coord));
+        for(Iterator<Coordinate> iter = coordinates.iterator(); iter.hasNext();){
+            if(!isAllowed(from, iter.next(), checker)){iter.remove();}
+        }
+        return coordinates;
+    }
+
     private class RuleSet {
         private final int fromRow;
         private final int fromColumn;
