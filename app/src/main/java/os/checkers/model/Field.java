@@ -1,5 +1,7 @@
 package os.checkers.model;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -7,20 +9,32 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
 
-public class Field implements Serializable {
-    private static final boolean allowBackShot = true;
+public class Field extends Observable implements Serializable {
     private Square[][] field = new Square[Coordinate.MAX_LENGTH][Coordinate.MAX_LENGTH];
     private Color player = Color.White;
 
     private static Gson getGson(){
         return new GsonBuilder()
                 .registerTypeAdapter(Coordinate.class, new InterfaceAdapter<Coordinate>())
+                .setExclusionStrategies(new ExclusionStrategy() {
+                    @Override
+                    public boolean shouldSkipField(FieldAttributes f) {
+                        return f.getDeclaringClass() == Observable.class;
+                    }
+
+                    @Override
+                    public boolean shouldSkipClass(Class<?> clazz) {
+                        return false;
+                    }
+                })
                 .create();
     }
 
     public String getJson() {
-        return getGson().toJson(this);
+        return getGson()
+                .toJson(this);
     }
 
     public static Field fromJson(String serializedToString) {
@@ -33,7 +47,6 @@ public class Field implements Serializable {
         initFieldWithSquares();
         initFieldWithCheckers(0, 2, Color.White);
         initFieldWithCheckers(5, 7, Color.Black);
-
     }
 
     public Field(Field field){
@@ -111,7 +124,9 @@ public class Field implements Serializable {
     }
 
     public boolean move(List<Coordinate> coordinates) {
-        return new Steps(coordinates).build();
+        boolean flag = new Steps(coordinates).build();
+        if(flag) {notifyObservers();}
+        return flag;
     }
 
     private void clearInBetween(final Coordinate from, final Coordinate to) {

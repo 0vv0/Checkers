@@ -8,7 +8,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 /**
  * A BroadcastReceiver that notifies of important Wi-Fi p2p events.
  */
-public class Receiver extends BroadcastReceiver {
+public class Receiver extends BroadcastReceiver{
 
     @Override
     public void onReceive(Context context, Intent intent) {

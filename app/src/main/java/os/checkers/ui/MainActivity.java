@@ -1,7 +1,6 @@
 package os.checkers.ui;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -14,18 +13,27 @@ import os.checkers.model.Field;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
-public class MainActivity extends Activity implements ViewWithChecker.OnClickListener {
+public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
     private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player;
-//    private int mainLayoutId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getMainLayout();
+        load(null);
+//        getMainLayout();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        save(null);
+        field.deleteObserver(this);
     }
 
     private int getSize() {
@@ -43,6 +51,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
         }
         selectedSquare.clear();
+        field.addObserver(this);
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.root);
         linearLayout.removeAllViews();
         MainLayout fieldLayout = new MainLayout(linearLayout.getContext(), player);
@@ -79,8 +88,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                     field.get(selectedSquare.get(0).getCoordinate()).getChecker())) {//checker
                 selectedSquare.add(vwc);
                 vwc.setSelected(true);
-                if (selectedSquare.size()==2 &&
-                        Math.abs(selectedSquare.get(0).getCoordinate().getRow()-selectedSquare.get(1).getCoordinate().getRow())==1
+                if (selectedSquare.size() == 2 &&
+                        Math.abs(selectedSquare.get(0).getCoordinate().getRow() - selectedSquare.get(1).getCoordinate().getRow()) == 1
                         ) {
                     move(v);
                 }
@@ -167,7 +176,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public void update(Observable o, Object arg) {
+        field = (Field)o;
+        getMainLayout();
     }
 }
