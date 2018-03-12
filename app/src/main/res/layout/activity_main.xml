@@ -54,6 +54,13 @@
             <Button
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:id="@+id/list"
+                    android:text="Find players"
+                    android:onClick="list"/>
+
+            <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:id="@+id/restart"
                     android:text="Restart game"
             android:onClick="restart"/>

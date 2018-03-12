@@ -1,15 +1,18 @@
 package os.checkers.ui;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import os.checkers.R;
 import os.checkers.model.Color;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
+import os.checkers.network.IntentActions;
+import os.checkers.network.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,20 +23,45 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player;
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Toast
+                    .makeText(getApplicationContext(), "Signal " + intent.getAction() + " received.", 3)
+                    .show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         load(null);
 //        getMainLayout();
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(IntentActions.LIST_PLAYERS.name());
+        intentFilter.addAction(IntentActions.GET_POSITION.name());
+        intentFilter.addAction(IntentActions.SET_POSITION.name());
+
+        registerReceiver(receiver, intentFilter);
+    }
+
+    @Override
     protected void onPause() {
-        super.onPause();
-        save(null);
         field.deleteObserver(this);
+        save(null);
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
+        super.onPause();
     }
 
     private int getSize() {
@@ -134,6 +162,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     public void restart(View view) {
+        field.deleteObserver(this);
         field = null;
         getMainLayout();
 //        ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.size(), field, this);
@@ -175,9 +204,15 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         }
     }
 
+    public void list(View v){
+        Intent intent = new Intent(this, Service.class);
+        intent.setAction(IntentActions.LIST_PLAYERS.name());
+        startService(intent);
+    }
+
     @Override
     public void update(Observable o, Object arg) {
-        field = (Field)o;
+        field = (Field) o;
         getMainLayout();
     }
 }
