@@ -64,7 +64,6 @@
                     android:id="@+id/restart"
                     android:text="Restart game"
             android:onClick="restart"/>
-
             <Button
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

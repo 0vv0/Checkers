@@ -37,8 +37,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        load(null);
-//        getMainLayout();
+//        load(null);
+        getMainLayout();
     }
 
     @Override
@@ -73,12 +73,12 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     private void getMainLayout() {
+        selectedSquare.clear();
         if (field == null) {
             field = new Field();
             player = Color.White;
 
         }
-        selectedSquare.clear();
         field.addObserver(this);
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.root);
         linearLayout.removeAllViews();
@@ -165,7 +165,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         field.deleteObserver(this);
         field = null;
         getMainLayout();
-//        ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.size(), field, this);
     }
 
     public void save(View view) {
