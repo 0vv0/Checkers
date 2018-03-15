@@ -20,25 +20,24 @@ import java.util.Observable;
 import java.util.Observer;
 
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
-    private Field field;
+    //    private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Toast
-                    .makeText(getApplicationContext(), "Signal " + intent.getAction() + " received.", 3)
+                    .makeText(getApplicationContext(), intent.toString(), Toast.LENGTH_LONG)
                     .show();
         }
     };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//        load(null);
-        getMainLayout();
+//        getMainLayout();
     }
 
     @Override
@@ -51,16 +50,16 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         intentFilter.addAction(IntentActions.SET_POSITION.name());
 
         registerReceiver(receiver, intentFilter);
+
+        Field.getInstance().addObserver(this);
+        load(null);
     }
 
     @Override
     protected void onPause() {
-        field.deleteObserver(this);
         save(null);
-        if (receiver != null) {
-            unregisterReceiver(receiver);
-            receiver = null;
-        }
+        Field.getInstance().deleteObserver(this);
+        unregisterReceiver(receiver);
         super.onPause();
     }
 
@@ -74,28 +73,18 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
     private void getMainLayout() {
         selectedSquare.clear();
-        if (field == null) {
-            field = new Field();
-            player = Color.White;
 
-        }
-        field.addObserver(this);
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.root);
         linearLayout.removeAllViews();
         MainLayout fieldLayout = new MainLayout(linearLayout.getContext(), player);
-//        fieldLayout.setId(fieldLayout.hashCode());
-//        mainLayoutId = fieldLayout.getId();
         linearLayout.addView(fieldLayout);
-        assert field != null;
-        fieldLayout.spawn(getSize() / field.size(), field, this);
+        fieldLayout.spawn(getSize() / Field.getInstance().size(), Field.getInstance(), this);
     }
 
     @Override
     public void onClick(final View v) {
         final ViewWithChecker vwc = (ViewWithChecker) v;
         Coordinate coordinate = vwc.getCoordinate();
-//        TextView tv = (TextView) findViewById(R.id.messageBox);
-//        tv.setText(field.getAllowedMovesFor(coordinate).toString());
         if (selectedSquare.size() > 0 &&
                 vwc.equals(selectedSquare.get(selectedSquare.size() - 1))) {//remove last selected
             selectedSquare.remove(selectedSquare.size() - 1);
@@ -103,17 +92,15 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         } else {
             if (selectedSquare.size() == 0) {
                 if (
-                        field.isSelectable(coordinate)
-//                        field.get(coordinate).getChecker() != null//only squares with checkers
-//                                && field.get(coordinate).getChecker().getColor() == field.getPlayer()//only checkers of our color
+                        Field.getInstance().isSelectable(coordinate)
                         ) {
                     selectedSquare.add((ViewWithChecker) v);
                     vwc.setSelected(true);
                 }
-            } else if (!selectedSquare.contains(v) && field.isAllowed(
+            } else if (!selectedSquare.contains(v) && Field.getInstance().isAllowed(
                     selectedSquare.get(selectedSquare.size() - 1).getCoordinate(), //from
                     vwc.getCoordinate(), //to
-                    field.get(selectedSquare.get(0).getCoordinate()).getChecker())) {//checker
+                    Field.getInstance().get(selectedSquare.get(0).getCoordinate()).getChecker())) {//checker
                 selectedSquare.add(vwc);
                 vwc.setSelected(true);
                 if (selectedSquare.size() == 2 &&
@@ -124,52 +111,25 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             }
         }
         if (selectedSquare.size() > 1 &&
-                !field.hasAllowedMoves(
+                !Field.getInstance().hasAllowedMoves(
                         selectedSquare.get(selectedSquare.size() - 1).getCoordinate(),
-                        field.get(selectedSquare.get(0).getCoordinate()).getChecker()
+                        Field.getInstance().get(selectedSquare.get(0).getCoordinate()).getChecker()
                 )) {
             move(v);
         }
-//        if (selectedSquare == null) {
-//            if (field.get(coordinate).isBlack()//only black squares
-//                    && field.get(coordinate).getChecker() != null//only squares with checkers
-//                    && field.get(coordinate).getChecker().getColor() == field.getPlayer())//only checkers of our color
-//            {
-//                selectedSquare = v;
-//                v.setSelected(true);
-//            }
-//        } else {
-//            if (selectedSquare.equals(v)) {
-//                selectedSquare = null;
-//                v.setSelected(false);
-//            } else {
-//                if (field.move(Coordinate.get(selectedSquare.getId()), Coordinate.get(v.getId()))) {
-//                    selectedSquare.setSelected(false);
-//                    selectedSquare = null;
-//                    MainLayout mainLayout = ((MainLayout) findViewById(mainLayoutId));
-//                    mainLayout.spawn(getSize() / field.size(), field, this);
-//                } else {
-//
-//                }
-//            }
-//        }
     }
 
     public void exit(View view) {
-        field = null;
-        selectedSquare = null;
         System.exit(0);
     }
 
     public void restart(View view) {
-        field.deleteObserver(this);
-        field = null;
-        getMainLayout();
+        Field.getInstance().newGame();
     }
 
     public void save(View view) {
         SharedPreferences.Editor editor = getSharedPreferences("mPrefs", MODE_PRIVATE).edit();
-        editor.putString("board", field.getJson());
+        editor.putString("board", Field.getInstance().getJson());
         editor.putString("player", player.name());
         editor.apply();
     }
@@ -178,18 +138,17 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         SharedPreferences prefs = getSharedPreferences("mPrefs", MODE_PRIVATE);
         if (prefs.contains("board") && prefs.contains("player")) {
             selectedSquare.clear();
-            field = Field.fromJson(prefs.getString("board", ""));
+            Field.fromJson(prefs.getString("board", ""));
             player = Color.valueOf(prefs.getString("player", ""));
-            getMainLayout();
-//            ((MainLayout) findViewById(mainLayoutId)).spawn(getSize() / field.size(), field, this);
+//            getMainLayout();
         }
     }
-
-    public void clearSave(View v) {
-        SharedPreferences.Editor editor = getSharedPreferences("mPrefs", MODE_PRIVATE).edit();
-        editor.clear();
-        editor.apply();
-    }
+//
+//    public void clearSave(View v) {
+//        SharedPreferences.Editor editor = getSharedPreferences("mPrefs", MODE_PRIVATE).edit();
+//        editor.clear();
+//        editor.apply();
+//    }
 
     public void move(View view) {
         if (selectedSquare.size() > 1) {
@@ -198,12 +157,12 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                 coordinates.add(selectedSquare.get(i).getCoordinate());
             }
             selectedSquare.clear();
-            field.move(coordinates);
-            getMainLayout();
+            Field.getInstance().move(coordinates);
+//            getMainLayout();
         }
     }
 
-    public void list(View v){
+    public void list(View v) {
         Intent intent = new Intent(this, Service.class);
         intent.setAction(IntentActions.LIST_PLAYERS.name());
         startService(intent);
@@ -211,7 +170,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
     @Override
     public void update(Observable o, Object arg) {
-        field = (Field) o;
         getMainLayout();
     }
 }

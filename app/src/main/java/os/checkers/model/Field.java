@@ -12,50 +12,51 @@ import java.util.List;
 import java.util.Observable;
 
 public class Field extends Observable implements Serializable {
+    /**
+     * We are The Singleton
+     */
+    private static final Field ourInstance = new Field();
+    public static synchronized Field getInstance() {
+        return ourInstance;
+    }
+
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Coordinate.class, new InterfaceAdapter<Coordinate>())
+            .setExclusionStrategies(new ExclusionStrategy() {
+                @Override
+                public boolean shouldSkipField(FieldAttributes f) {
+                    return f.getDeclaringClass() == Observable.class;
+                }
+
+                @Override
+                public boolean shouldSkipClass(Class<?> clazz) {
+                    return false;
+                }
+            })
+            .create();
+
     private Square[][] field = new Square[Coordinate.MAX_LENGTH][Coordinate.MAX_LENGTH];
     private Color player = Color.White;
 
-    private static Gson getGson(){
-        return new GsonBuilder()
-                .registerTypeAdapter(Coordinate.class, new InterfaceAdapter<Coordinate>())
-                .setExclusionStrategies(new ExclusionStrategy() {
-                    @Override
-                    public boolean shouldSkipField(FieldAttributes f) {
-                        return f.getDeclaringClass() == Observable.class;
-                    }
-
-                    @Override
-                    public boolean shouldSkipClass(Class<?> clazz) {
-                        return false;
-                    }
-                })
-                .create();
-    }
-
     public String getJson() {
-        return getGson()
-                .toJson(this);
+        return gson.toJson(this);
     }
 
     public static Field fromJson(String serializedToString) {
-        return getGson().fromJson(serializedToString, Field.class);
+        Field f = gson.fromJson(serializedToString, Field.class);
+        getInstance().field = f.field;
+        getInstance().player = f.player;
+        return getInstance();
     }
 
-    public Field() {
-//        this.field = ;
-//        player = Color.White;
+    private Field() {
+       newGame();
+    }
+
+    public void newGame(){
         initFieldWithSquares();
         initFieldWithCheckers(0, 2, Color.White);
         initFieldWithCheckers(5, 7, Color.Black);
-    }
-
-    public Field(Field field){
-        for (int i = 0; i <field.size() ; i++) {
-            for (int j= 0; j<field.size();j++){
-                this.field[i][j] = field.get(CoordinateImpl.get(i, j));
-                this.player = field.getPlayer();
-            }
-        }
     }
 
     public Square get(Coordinate coordinate) {
@@ -119,10 +120,6 @@ public class Field extends Observable implements Serializable {
         this.get(to).setChecker(checker);//put checker onto onto target square
     }
 
-    public boolean move(Coordinate from, Coordinate... to) {
-        return new Steps(from, to).build();
-    }
-
     public boolean move(List<Coordinate> coordinates) {
         boolean flag = new Steps(coordinates).build();
         if(flag) {notifyObservers();}
@@ -137,11 +134,11 @@ public class Field extends Observable implements Serializable {
         }
     }
 
-    public boolean isAllowed(Coordinate from, Coordinate to) {
+    public boolean isAllowed(final Coordinate from, final Coordinate to) {
         return isAllowed(from, to, field[from.getRow()][from.getColumn()].getChecker());
     }
 
-    public boolean isAllowed(Coordinate from, Coordinate to, Checker checker) {
+    public boolean isAllowed(final Coordinate from, final Coordinate to, final Checker checker) {
         RuleSet rules = new RuleSet(from, to, checker);
         return rules.check();
     }
@@ -159,12 +156,12 @@ public class Field extends Observable implements Serializable {
         return getAllowedMovesFor(coordinate).size()>0;
     }
 
-    public boolean hasAllowedMoves(Coordinate coordinate, Checker checker) {
+    public boolean hasAllowedMoves(final Coordinate coordinate, final Checker checker) {
 
         return checker!=null && getAllowedMovesFor(coordinate, checker).size()>0;
     }
 
-    private List<Coordinate> getAllowedMovesFor(Coordinate from, Checker checker) {
+    private List<Coordinate> getAllowedMovesFor(final Coordinate from, final Checker checker) {
         List<Coordinate> coordinates = from.getDiagonals();
 //        coordinates.removeIf(coord->isAllowed(from, coord));
         for(Iterator<Coordinate> iter = coordinates.iterator(); iter.hasNext();){
