@@ -2,17 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="os.checkers">
 
-    <!--<permission android:name="os.checkers.permissions.ALLOW_OVER_WIFI"-->
-    <!--android:label="@string/permlab_allowOverWifi"-->
-    <!--android:description="@string/permdesc_allowOverWifi"-->
-    <!--android:protectionLevel="normal"-->
-    <!--/>-->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:required="true" android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:required="true" android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:required="true" android:name="android.permission.INTERNET"/>
+    <uses-permission android:required="true" android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <!--<uses-permission android:name="os.checkers.permissions.ALLOW_OVER_WIFI"/>-->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="os.checkers.permissions.ALLOW_OVER_WIFI"/>
 
     <application
             android:allowBackup="true"
@@ -33,17 +29,6 @@
                 <action android:name="os.checkers.intents.END"/>
             </intent-filter>
         </activity>
-        <!--<receiver-->
-                <!--android:name=".network.Receiver"-->
-                <!--android:enabled="true"-->
-                <!--android:exported="true">-->
-            <!--<intent-filter>-->
-                <!--<action android:name="os.checkers.intents.START_NEW_GAME"/>-->
-                <!--<action android:name="os.checkers.intents.RECONNECT"/>-->
-                <!--<action android:name="os.checkers.intents.MOVE_DONE"/>-->
-                <!--<action android:name="os.checkers.intents.FINISH_GAME"/>-->
-            <!--</intent-filter>-->
-        <!--</receiver>-->
     </application>
 
 </manifest>

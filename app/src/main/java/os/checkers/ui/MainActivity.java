@@ -26,9 +26,17 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Toast
-                    .makeText(getApplicationContext(), intent.toString(), Toast.LENGTH_LONG)
-                    .show();
+            switch (IntentActions.valueOf(intent.getAction())) {
+                case WIFI_ERROR:
+                    Toast
+                            .makeText(getApplicationContext(), "WIFI error", Toast.LENGTH_LONG)
+                            .show();
+                    break;
+                case LIST_PLAYERS:
+                    Toast
+                            .makeText(getApplicationContext(), intent.getStringArrayExtra("devices").length, Toast.LENGTH_LONG)
+                            .show();
+            }
         }
     };
 
@@ -45,8 +53,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(IntentActions.LIST_PLAYERS.name());
-        intentFilter.addAction(IntentActions.GET_POSITION.name());
-        intentFilter.addAction(IntentActions.SET_POSITION.name());
+        intentFilter.addAction(IntentActions.WIFI_ERROR.name());
+//        intentFilter.addAction(IntentActions.GET_POSITION.name());
+//        intentFilter.addAction(IntentActions.SET_POSITION.name());
+
         registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);
@@ -162,7 +172,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
     public void list(View v) {
         Intent intent = new Intent(this, Service.class);
-        intent.setAction(IntentActions.LIST_PLAYERS.name());
+        intent.setAction(IntentActions.REQUEST_PLAYERS_LIST.name());
+        Toast.makeText(this, "searching for players...", Toast.LENGTH_LONG).show();
         startService(intent);
     }
 
