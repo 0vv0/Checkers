@@ -28,7 +28,9 @@ class ViewWithChecker extends Button {
         if (checker != null) {
             this.setTextColor(checker.isBlack() ? Color.BLACK : Color.WHITE);
 //            this.setText(checker.getType() == Checker.Type.King ? "\u0398" : "\u039F");
-            this.setText(checker.getType() == Checker.Type.King ? "\u0298" : "\u039F");
+            this.setText((checker.getType() == Checker.Type.King ? "\u0298" : "\u039F")
+//                    + square.getCoord().getRow() + square.getCoord().getColumn()
+            );
         }
         if (onClickListener != null) {
             setOnClickListener(onClickListener);

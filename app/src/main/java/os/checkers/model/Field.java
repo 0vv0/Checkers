@@ -16,7 +16,8 @@ public class Field extends Observable implements Serializable {
      * We are The Singleton
      */
     private static final Field ourInstance = new Field();
-    public static synchronized Field getInstance() {
+
+    public static Field getInstance() {
         return ourInstance;
     }
 
@@ -35,28 +36,41 @@ public class Field extends Observable implements Serializable {
             })
             .create();
 
-    private Square[][] field = new Square[Coordinate.MAX_LENGTH][Coordinate.MAX_LENGTH];
-    private Color player = Color.White;
+    private Square[][] field;
+    private Color player;
 
     public String getJson() {
         return gson.toJson(this);
     }
 
-    public static Field fromJson(String serializedToString) {
+    public static void fromJson(String serializedToString) {
         Field f = gson.fromJson(serializedToString, Field.class);
         getInstance().field = f.field;
         getInstance().player = f.player;
-        return getInstance();
+        getInstance().notifyObservers();
     }
 
     private Field() {
-       newGame();
+        startNewGame();
     }
 
-    public void newGame(){
+    private void startNewGame() {
+        player = Color.White;
+        field = new Square[Coordinate.MAX_LENGTH][Coordinate.MAX_LENGTH];
         initFieldWithSquares();
         initFieldWithCheckers(0, 2, Color.White);
         initFieldWithCheckers(5, 7, Color.Black);
+    }
+
+    public void newGame() {
+        startNewGame();
+        notifyObservers();
+    }
+
+    @Override
+    public void notifyObservers() {
+        setChanged();
+        super.notifyObservers();
     }
 
     public Square get(Coordinate coordinate) {
@@ -64,21 +78,18 @@ public class Field extends Observable implements Serializable {
     }
 
     private void initFieldWithSquares() {
-        Color squareColorStartedCurrent = player;
+        Color squareColorStartedCurrent = Color.White;
         for (int i = 0; i < size(); i++) {
             squareColorStartedCurrent = squareColorStartedCurrent.getNext();
+            Color upgradeToKingThisColor;
+            if (i == 0) {
+                upgradeToKingThisColor = Color.White;
+            } else if (i == size() - 1) {
+                upgradeToKingThisColor = Color.Black;
+            } else {
+                upgradeToKingThisColor = null;
+            }
             for (int j = 0; j < size(); j++) {
-                Color upgradeToKingThisColor;
-                if (i == 0) {
-//                    upgrade to King on this line for #player.getNext() color
-                    upgradeToKingThisColor = player.getNext();
-                } else if (i == size() - 1) {
-//                    upgrade to King on this line for #player color
-                    upgradeToKingThisColor = player;
-                } else {
-                    upgradeToKingThisColor = null;
-                }
-
                 field[i][j] = new Square(CoordinateImpl.get(i, j), squareColorStartedCurrent, upgradeToKingThisColor);
                 squareColorStartedCurrent = squareColorStartedCurrent.getNext();
 
@@ -122,7 +133,9 @@ public class Field extends Observable implements Serializable {
 
     public boolean move(List<Coordinate> coordinates) {
         boolean flag = new Steps(coordinates).build();
-        if(flag) {notifyObservers();}
+        if (flag) {
+            notifyObservers();
+        }
         return flag;
     }
 
@@ -146,26 +159,30 @@ public class Field extends Observable implements Serializable {
     public List<Coordinate> getAllowedMovesFor(final Coordinate from) {
         List<Coordinate> coordinates = from.getDiagonals();
 //        coordinates.removeIf(coord->isAllowed(from, coord));
-        for(Iterator<Coordinate> iter = coordinates.iterator(); iter.hasNext();){
-            if(!isAllowed(from, iter.next())){iter.remove();}
+        for (Iterator<Coordinate> iter = coordinates.iterator(); iter.hasNext(); ) {
+            if (!isAllowed(from, iter.next())) {
+                iter.remove();
+            }
         }
         return coordinates;
     }
 
-    public boolean isSelectable(final Coordinate coordinate){
-        return getAllowedMovesFor(coordinate).size()>0;
+    public boolean isSelectable(final Coordinate coordinate) {
+        return getAllowedMovesFor(coordinate).size() > 0;
     }
 
     public boolean hasAllowedMoves(final Coordinate coordinate, final Checker checker) {
 
-        return checker!=null && getAllowedMovesFor(coordinate, checker).size()>0;
+        return checker != null && getAllowedMovesFor(coordinate, checker).size() > 0;
     }
 
     private List<Coordinate> getAllowedMovesFor(final Coordinate from, final Checker checker) {
         List<Coordinate> coordinates = from.getDiagonals();
 //        coordinates.removeIf(coord->isAllowed(from, coord));
-        for(Iterator<Coordinate> iter = coordinates.iterator(); iter.hasNext();){
-            if(!isAllowed(from, iter.next(), checker)){iter.remove();}
+        for (Iterator<Coordinate> iter = coordinates.iterator(); iter.hasNext(); ) {
+            if (!isAllowed(from, iter.next(), checker)) {
+                iter.remove();
+            }
         }
         return coordinates;
     }
@@ -191,7 +208,7 @@ public class Field extends Observable implements Serializable {
             if (checker == null) {
                 fChecker = fSquare.getChecker();//if Checker not set than use one from From cell. Can be null
             } else {
-                if(fSquare.getChecker() == null || checker.equals(fSquare.getChecker())){//Checker given and From cell is emty or has given Checker
+                if (fSquare.getChecker() == null || checker.equals(fSquare.getChecker())) {//Checker given and From cell is empty or has given Checker
                     fChecker = checker;
                 } else {
                     fChecker = null;

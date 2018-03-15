@@ -22,7 +22,7 @@ import java.util.Observer;
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
     //    private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
-    private Color player;
+    private Color player = Color.White;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -37,7 +37,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        getMainLayout();
     }
 
     @Override
@@ -48,7 +47,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         intentFilter.addAction(IntentActions.LIST_PLAYERS.name());
         intentFilter.addAction(IntentActions.GET_POSITION.name());
         intentFilter.addAction(IntentActions.SET_POSITION.name());
-
         registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);
@@ -120,6 +118,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     public void exit(View view) {
+        save(null);
         System.exit(0);
     }
 
@@ -138,8 +137,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         SharedPreferences prefs = getSharedPreferences("mPrefs", MODE_PRIVATE);
         if (prefs.contains("board") && prefs.contains("player")) {
             selectedSquare.clear();
-            Field.fromJson(prefs.getString("board", ""));
             player = Color.valueOf(prefs.getString("player", ""));
+            Field.fromJson(prefs.getString("board", ""));
 //            getMainLayout();
         }
     }
@@ -158,7 +157,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             }
             selectedSquare.clear();
             Field.getInstance().move(coordinates);
-//            getMainLayout();
         }
     }
 
