@@ -17,7 +17,7 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <service android:name=".network.Service"
+        <service android:name=".network.BrokenService"
                  android:exported="false"/>
         <activity android:name=".ui.MainActivity">
             <intent-filter>

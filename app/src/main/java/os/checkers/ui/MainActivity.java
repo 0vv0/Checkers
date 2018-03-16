@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import os.checkers.R;
 import os.checkers.model.Color;
@@ -20,22 +21,47 @@ import java.util.Observable;
 import java.util.Observer;
 
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
+    public enum Intents{
+        PLAYERS_LIST,
+        DISCONNECTED,
+        SET_POSITION;
+        static boolean containsName(String name) {
+            for (int i = 0; i < values().length; i++) {
+                if (values()[i].name().equals(name)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+    private TextView mTextView;
+
     //    private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player = Color.White;
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (IntentActions.valueOf(intent.getAction())) {
-                case WIFI_ERROR:
+            switch (Intents.valueOf(intent.getAction())) {
+                case DISCONNECTED:
                     Toast
-                            .makeText(getApplicationContext(), "WIFI error: " + intent.getStringExtra("error"), Toast.LENGTH_LONG)
+                            .makeText(getApplicationContext(), "Disconnected...", Toast.LENGTH_SHORT)
                             .show();
+                    mTextView.setText("Disconnected...");
                     break;
-                case LIST_PLAYERS:
+                case PLAYERS_LIST:
                     Toast
-                            .makeText(getApplicationContext(), intent.getStringArrayExtra("devices").length, Toast.LENGTH_LONG)
+                            .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
                             .show();
+                    mTextView.setText(intent.getBundleExtra("list").toString());
+                    break;
+                case SET_POSITION:
+                    Toast
+                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_LONG)
+                            .show();
+                    mTextView.setText(intent.getStringExtra("data"));
+                    Field.fromJson(intent.getStringExtra("data"));
+                    break;
             }
         }
     };
@@ -45,6 +71,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mTextView = (TextView) findViewById(R.id.info);
     }
 
     @Override
@@ -52,11 +79,9 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onResume();
 
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(IntentActions.LIST_PLAYERS.name());
-        intentFilter.addAction(IntentActions.WIFI_ERROR.name());
-//        intentFilter.addAction(IntentActions.GET_POSITION.name());
-//        intentFilter.addAction(IntentActions.SET_POSITION.name());
-
+        intentFilter.addAction(Intents.PLAYERS_LIST.name());
+        intentFilter.addAction(Intents.SET_POSITION.name());
+        intentFilter.addAction(Intents.DISCONNECTED.name());
         registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);

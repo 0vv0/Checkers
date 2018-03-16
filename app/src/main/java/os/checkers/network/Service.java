@@ -1,98 +1,147 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package os.checkers.network;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pManager;
-import android.net.wifi.p2p.WifiP2pManager.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.net.wifi.p2p.WifiP2pManager.*;
+import android.net.nsd.NsdServiceInfo;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
 
 public class Service extends IntentService {
-    public Service() {
-        this(Service.class.getName());
+    public enum Intents{
+        LIST_PLAYERS,
+        USE_PLAYER,
+        SET_POSITION,
+        GET_POSITION;
+        static boolean containsName(String name) {
+            for (int i = 0; i < values().length; i++) {
+                if (values()[i].name().equals(name)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
+    private static final String TAG = Service.class.getName();
+
+    private NsdHelper mNsdHelper;
+    private Handler mUpdateHandler;
+    private Connection mConnection;
 
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
      *
      * @param name Used to name the worker thread, important only for debugging.
      */
-    public Service(String name) {
+    public Service(final String name) {
         super(name);
-        peerListListener = new PeerListListener() {
+        mUpdateHandler = new Handler() {
             @Override
-            public void onPeersAvailable(WifiP2pDeviceList peerList) {
-
-                List<WifiP2pDevice> refreshedPeers = new ArrayList<>(peerList.getDeviceList());
-
-                if (!refreshedPeers.equals(peers)) {
-                    peers.clear();
-                    peers.addAll(refreshedPeers);
-
-                    // Perform any other updates needed based on the new list of
-                    // peers connected to the Wi-Fi P2P network.
-                }
-
-                final Intent broadcastIntent = new Intent();
-                broadcastIntent.setAction(IntentActions.LIST_PLAYERS.name());
-                ArrayList<String> devices = new ArrayList<>();
-                for (WifiP2pDevice peer : peers) {
-                    devices.add(peer.toString());
-                }
-                broadcastIntent.putStringArrayListExtra("devices", devices);
-                sendBroadcast(broadcastIntent);
+            public void handleMessage(Message msg) {
+                Intent intent = new Intent();
+                intent.setAction(IntentActions.SET_POSITION.name());
+                intent.putExtra("data", msg.getData());
+                sendBroadcast(intent);
             }
         };
     }
 
-    private List<WifiP2pDevice> peers = new ArrayList<>();
-    private PeerListListener peerListListener;
-
-    @Override
-    protected void onHandleIntent(final Intent intent) {
-        final Intent broadcastIntent = new Intent();
-
-
-        switch (IntentActions.valueOf(intent.getAction())) {
-            case REQUEST_PLAYERS_LIST:
-                final WifiP2pManager mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
-                final WifiP2pManager.Channel mChannel = mManager.initialize(this, getMainLooper(), null);
-                mManager.discoverServices(mChannel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        mManager.requestPeers(mChannel, peerListListener);
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        String err = "";
-                        switch (reason) {
-                            case P2P_UNSUPPORTED:
-                                err = "Unsupported";
-                                break;
-                            case ERROR:
-                                err = "Error";
-                                break;
-                            case BUSY:
-                                err = "Busy";
-                                break;
-                            default:
-                                err = String.valueOf(reason);
-                                break;
-                        }
-                        broadcastIntent.setAction(IntentActions.WIFI_ERROR.name());
-                        broadcastIntent.putExtra("error", err);
-                        sendBroadcast(broadcastIntent);
-                    }
-                });
-                break;
-
+    public void clickAdvertise(View v) {
+        // Register service
+        if(mConnection.getLocalPort() > -1) {
+            mNsdHelper.registerService(mConnection.getLocalPort());
+        } else {
+            Log.d(TAG, "ServerSocket isn't bound.");
         }
     }
+    public void clickDiscover(View v) {
+        mNsdHelper.discoverServices();
+    }
+    public void clickConnect(View v) {
+        NsdServiceInfo service = mNsdHelper.getChosenServiceInfo();
+        if (service != null) {
+            Log.d(TAG, "Connecting.");
+            mConnection.connectToServer(service.getHost(),
+                    service.getPort());
+        } else {
+            Log.d(TAG, "No service to connect to!");
+        }
+    }
+    public void Send(final String msg) {
+        if (msg != null) {
+            if (!msg.isEmpty()) {
+                mConnection.sendMessage(msg);
+            }
+        }
+    }
+    protected void onStart() {
+        Log.d(TAG, "Starting.");
+        mConnection = new Connection(mUpdateHandler);
+        mNsdHelper = new NsdHelper(this);
+        mNsdHelper.initializeNsd();
+    }
+    protected void onPause() {
+        Log.d(TAG, "Pausing.");
+        if (mNsdHelper != null) {
+            mNsdHelper.stopDiscovery();
+        }
+    }
+    protected void onResume() {
+        Log.d(TAG, "Resuming.");
+        if (mNsdHelper != null) {
+            mNsdHelper.discoverServices();
+        }
+    }
+    // For KitKat and earlier releases, it is necessary to remove the
+    // service registration when the application is stopped.  There's
+    // no guarantee that the onDestroy() method will be called (we're
+    // killable after onStop() returns) and the NSD service won't remove
+    // the registration for us if we're killed.
+    // In L and later, NsdService will automatically unregister us when
+    // our connection goes away when we're killed, so this step is
+    // optional (but recommended).
+    protected void onStop() {
+        Log.d(TAG, "Being stopped.");
+        mNsdHelper.tearDown();
+        mConnection.tearDown();
+        mNsdHelper = null;
+        mConnection = null;
+    }
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "Being destroyed.");
+        super.onDestroy();
+    }
 
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        Toast.makeText(getApplicationContext(), intent.getAction(), Toast.LENGTH_LONG).show();
+        switch (Intents.valueOf(intent.getAction())){
+            case USE_PLAYER:
+                break;
+            case LIST_PLAYERS:
+                break;
+            case SET_POSITION:
+                break;
+            case GET_POSITION:
+                break;
+        }
+    }
 }
