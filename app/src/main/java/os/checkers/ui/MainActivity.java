@@ -12,7 +12,7 @@ import os.checkers.model.Color;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
 import os.checkers.network.IntentActions;
-import os.checkers.network.Service;
+import os.checkers.network.NsdService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             switch (IntentActions.valueOf(intent.getAction())) {
                 case WIFI_ERROR:
                     Toast
-                            .makeText(getApplicationContext(), "WIFI error", Toast.LENGTH_LONG)
+                            .makeText(getApplicationContext(), "WIFI error: " + intent.getStringExtra("error"), Toast.LENGTH_LONG)
                             .show();
                     break;
                 case LIST_PLAYERS:
@@ -171,9 +171,9 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     public void list(View v) {
-        Intent intent = new Intent(this, Service.class);
+        Intent intent = new Intent(this, NsdService.class);
         intent.setAction(IntentActions.REQUEST_PLAYERS_LIST.name());
-        Toast.makeText(this, "searching for players...", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
         startService(intent);
     }
 
