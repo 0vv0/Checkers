@@ -4,7 +4,6 @@ public enum IntentActions {
     REQUEST_PLAYERS_LIST,
     LIST_PLAYERS,
     WIFI_ERROR,
-    NSDSERVICE_REQUEST_PLAYERS_LIST,
     SET_POSITION,
     GET_POSITION;
     static boolean containsName(String name) {

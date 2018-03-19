@@ -1,4 +1,5 @@
 package os.checkers.network;
+
 /*
  * Copyright (C) 2012 The Android Open Source Project
  *
@@ -14,24 +15,20 @@ package os.checkers.network;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import android.content.Context;
-import android.net.nsd.NsdServiceInfo;
 import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 public class NsdHelper {
-    private Context mContext;
-    private NsdManager mNsdManager;
-    private NsdManager.ResolveListener mResolveListener;
-    private NsdManager.DiscoveryListener mDiscoveryListener;
-    private NsdManager.RegistrationListener mRegistrationListener;
-    private static final String SERVICE_TYPE = "_http._tcp.";
-    private static final String TAG = "NsdHelper";
-    private String mServiceName = "Checkers";
-    private NsdServiceInfo mService;
-
-    public NsdHelper(Context context) {
-        mContext = context;
-        mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
+    NsdManager mNsdManager;
+    NsdManager.ResolveListener mResolveListener;
+    NsdManager.DiscoveryListener mDiscoveryListener;
+    NsdManager.RegistrationListener mRegistrationListener;
+    public static final String SERVICE_TYPE = "_http._tcp.";
+    public static final String TAG = "NsdHelper";
+    public String mServiceName = "Checkers";
+    NsdServiceInfo mService;
+    public NsdHelper(NsdManager nsdManager) {
+        mNsdManager = nsdManager;
     }
     public void initializeNsd() {
         initializeResolveListener();
@@ -41,13 +38,13 @@ public class NsdHelper {
         mDiscoveryListener = new NsdManager.DiscoveryListener() {
             @Override
             public void onDiscoveryStarted(String regType) {
-                Log.d(TAG, "BrokenService discovery started");
+                Log.d(TAG, "Service discovery started");
             }
             @Override
             public void onServiceFound(NsdServiceInfo service) {
-                Log.d(TAG, "BrokenService discovery success" + service);
+                Log.d(TAG, "Service discovery success" + service);
                 if (!service.getServiceType().equals(SERVICE_TYPE)) {
-                    Log.d(TAG, "Unknown BrokenService Type: " + service.getServiceType());
+                    Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
                 } else if (service.getServiceName().equals(mServiceName)) {
                     Log.d(TAG, "Same machine: " + mServiceName);
                 } else if (service.getServiceName().contains(mServiceName)){
@@ -97,19 +94,19 @@ public class NsdHelper {
             @Override
             public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
                 mServiceName = NsdServiceInfo.getServiceName();
-                Log.d(TAG, "BrokenService registered: " + mServiceName);
+                Log.d(TAG, "Service registered: " + mServiceName);
             }
             @Override
             public void onRegistrationFailed(NsdServiceInfo arg0, int arg1) {
-                Log.d(TAG, "BrokenService registration failed: " + arg1);
+                Log.d(TAG, "Service registration failed: " + arg1);
             }
             @Override
             public void onServiceUnregistered(NsdServiceInfo arg0) {
-                Log.d(TAG, "BrokenService unregistered: " + arg0.getServiceName());
+                Log.d(TAG, "Service unregistered: " + arg0.getServiceName());
             }
             @Override
             public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                Log.d(TAG, "BrokenService unregistration failed: " + errorCode);
+                Log.d(TAG, "Service unregistration failed: " + errorCode);
             }
         };
     }

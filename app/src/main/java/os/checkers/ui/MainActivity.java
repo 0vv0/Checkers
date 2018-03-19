@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.*;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,6 +22,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
+    private static final String TAG = MainActivity.class.getName();
     public enum Intents{
         PLAYERS_LIST,
         DISCONNECTED,
@@ -59,8 +61,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                     Toast
                             .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_LONG)
                             .show();
-                    mTextView.setText(intent.getStringExtra("data"));
-                    Field.fromJson(intent.getStringExtra("data"));
+                    mTextView.setText(intent.getStringExtra(NsdService.POSITION));
+                    Field.fromJson(intent.getStringExtra(NsdService.POSITION));
                     break;
             }
         }
@@ -196,10 +198,11 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     public void list(View v) {
-        Intent intent = new Intent(this, NsdService.class);
+        Intent intent = new Intent(getBaseContext(), NsdService.class);
         intent.setAction(IntentActions.REQUEST_PLAYERS_LIST.name());
         Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
-        startService(intent);
+        Log.d(TAG, intent.getAction());
+        this.startService(intent);
     }
 
     @Override

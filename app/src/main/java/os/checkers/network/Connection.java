@@ -4,12 +4,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -18,15 +14,15 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class Connection {
-    private Handler mUpdateHandler;
     private GameServer mGameServer;
     private GameClient mGameClient;
-    private static final String TAG = "Connection";
+    private static final String TAG = Connection.class.getName();
     private Socket mSocket;
     private int mPort = -1;
-    public Connection(Handler handler) {
-        mUpdateHandler = handler;
-        mGameServer = new GameServer(handler);
+    private Handler mHandler;
+    public Connection(Handler mHandler) {
+        mGameServer = new GameServer();
+        this.mHandler = mHandler;
     }
     public void tearDown() {
         mGameServer.tearDown();
@@ -50,16 +46,11 @@ public class Connection {
     }
     public synchronized void updateMessages(String msg, boolean local) {
         Log.e(TAG, "Updating message: " + msg);
-        if (local) {
-            msg = "me: " + msg;
-        } else {
-            msg = "them: " + msg;
-        }
-        Bundle messageBundle = new Bundle();
-        messageBundle.putString("msg", msg);
         Message message = new Message();
-        message.setData(messageBundle);
-        mUpdateHandler.sendMessage(message);
+        Bundle bundle = new Bundle();
+        bundle.putString("position", msg);
+        message.setData(bundle);
+        mHandler.sendMessage(message);
     }
     private synchronized void setSocket(Socket socket) {
         Log.d(TAG, "setSocket being called.");
@@ -83,7 +74,7 @@ public class Connection {
     private class GameServer {
         ServerSocket mServerSocket = null;
         Thread mThread = null;
-        GameServer(Handler handler) {
+        GameServer() {
             mThread = new Thread(new ServerThread());
             mThread.start();
         }
@@ -127,7 +118,7 @@ public class Connection {
         private Thread mSendThread;
         private Thread mRecThread;
         GameClient(InetAddress address, int port) {
-            Log.d(CLIENT_TAG, "Creating chatClient");
+            Log.d(CLIENT_TAG, "Creating GameClient");
             this.mAddress = address;
             this.PORT = port;
             mSendThread = new Thread(new SendingThread());
