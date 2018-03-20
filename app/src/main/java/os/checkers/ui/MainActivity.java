@@ -198,8 +198,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     }
 
     public void list(View v) {
-        Intent intent = new Intent(getBaseContext(), NsdService.class);
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), NsdService.class);
         intent.setAction(IntentActions.REQUEST_PLAYERS_LIST.name());
+
         Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
         Log.d(TAG, intent.getAction());
         this.startService(intent);

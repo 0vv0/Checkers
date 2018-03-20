@@ -16,6 +16,7 @@ public class NsdService extends IntentService {
     private NsdHelper mNsdHelper;
     private Connection mConnection;
     private Handler mHandler;
+    private Context mContext;
 
     public NsdService() {
         this(TAG);
@@ -29,7 +30,11 @@ public class NsdService extends IntentService {
     public NsdService(String name) {
         super(name);
         Log.d(TAG, "Starting...");
-        NsdManager nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
+        mContext = getApplication().getApplicationContext();
+        NsdManager nsdManager;
+        Object obj = mContext.getSystemService(Context.NSD_SERVICE);
+        assert obj!=null;
+        nsdManager = (NsdManager)obj;
         mNsdHelper = new NsdHelper(nsdManager);
         final Intent intent = new Intent(this, this.getClass());
         intent.setAction(IntentActions.SET_POSITION.name());
