@@ -16,7 +16,6 @@ public class NsdService extends IntentService {
     private NsdHelper mNsdHelper;
     private Connection mConnection;
     private Handler mHandler;
-    private Context mContext;
 
     public NsdService() {
         this(TAG);
@@ -30,24 +29,32 @@ public class NsdService extends IntentService {
     public NsdService(String name) {
         super(name);
         Log.d(TAG, "Starting...");
-        mContext = getApplication().getApplicationContext();
-        NsdManager nsdManager;
-        Object obj = mContext.getSystemService(Context.NSD_SERVICE);
-        assert obj!=null;
-        nsdManager = (NsdManager)obj;
+
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        NsdManager nsdManager = (NsdManager)getSystemService(Context.NSD_SERVICE);
         mNsdHelper = new NsdHelper(nsdManager);
-        final Intent intent = new Intent(this, this.getClass());
-        intent.setAction(IntentActions.SET_POSITION.name());
+        final Intent intent = new Intent();
+
         mHandler = new Handler(this.getMainLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
-                intent.putExtra(POSITION, msg);
-                sendBroadcast(intent);
+                if(msg.getData().containsKey(Connection.TAG)){
+                    mNsdHelper.registerService(mConnection.getLocalPort());
+                } else if(msg.getData().containsKey(POSITION)){
+                    intent.setAction(IntentActions.SET_POSITION.name());
+                    intent.putExtra(POSITION, msg);
+                    sendBroadcast(intent);
+                }
                 return false;
             }
         });
         mConnection = new Connection(mHandler);
-        mNsdHelper.registerService(mConnection.getLocalPort());
+//        Log.d(TAG, mConnection.toString());
+//        mNsdHelper.registerService(mConnection.getLocalPort());
     }
 
     @Override

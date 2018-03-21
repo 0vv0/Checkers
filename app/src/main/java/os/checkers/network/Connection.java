@@ -16,7 +16,7 @@ import java.util.concurrent.BlockingQueue;
 public class Connection {
     private GameServer mGameServer;
     private GameClient mGameClient;
-    private static final String TAG = Connection.class.getName();
+    public static final String TAG = Connection.class.getName();
     private Socket mSocket;
     private int mPort = -1;
     private Handler mHandler;
@@ -48,7 +48,7 @@ public class Connection {
         Log.e(TAG, "Updating message: " + msg);
         Message message = new Message();
         Bundle bundle = new Bundle();
-        bundle.putString("position", msg);
+        bundle.putString(NsdService.POSITION, msg);
         message.setData(bundle);
         mHandler.sendMessage(message);
     }
@@ -71,6 +71,18 @@ public class Connection {
     private Socket getSocket() {
         return mSocket;
     }
+
+    @Override
+    public String toString() {
+        return "Connection{" +
+                "mGameServer=" + mGameServer +
+                ", mGameClient=" + mGameClient +
+                ", mSocket=" + mSocket +
+                ", mPort=" + mPort +
+                ", mHandler=" + mHandler +
+                '}';
+    }
+
     private class GameServer {
         ServerSocket mServerSocket = null;
         Thread mThread = null;
@@ -94,6 +106,11 @@ public class Connection {
                     // used.  Just grab an available one  and advertise it via Nsd.
                     mServerSocket = new ServerSocket(0);
                     setLocalPort(mServerSocket.getLocalPort());
+                    Message msg = new Message();
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(TAG, getLocalPort());
+                    msg.setData(bundle);
+                    mHandler.sendMessage(msg);
                     while (!Thread.currentThread().isInterrupted()) {
                         Log.d(TAG, "ServerSocket Created, awaiting connection");
                         setSocket(mServerSocket.accept());
@@ -101,6 +118,9 @@ public class Connection {
                         if (mGameClient == null) {
                             int port = mSocket.getPort();
                             InetAddress address = mSocket.getInetAddress();
+                            Log.d(TAG, mServerSocket.toString());
+                            Log.d(TAG, mSocket.toString());
+
                             connectToServer(address, port);
                         }
                     }

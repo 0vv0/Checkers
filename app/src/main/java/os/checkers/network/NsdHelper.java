@@ -141,6 +141,7 @@ public class NsdHelper {
     public void tearDown() {
         if (mRegistrationListener != null) {
             try {
+                Log.d(TAG, "Trying to unregister service...");
                 mNsdManager.unregisterService(mRegistrationListener);
             } finally {
             }

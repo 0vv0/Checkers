@@ -3,6 +3,7 @@ package os.checkers.network;
 public enum IntentActions {
     REQUEST_PLAYERS_LIST,
     LIST_PLAYERS,
+    SERVER_SOCKET_UP,
     WIFI_ERROR,
     SET_POSITION,
     GET_POSITION;
