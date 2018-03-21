@@ -9,7 +9,7 @@ import android.os.Message;
 import android.util.Log;
 
 public class NsdService extends IntentService {
-    private final static String TAG = NsdService.class.getName();
+    public final static String TAG = NsdService.class.getName();
     public final static String POSITION = "position";
 
 
@@ -29,22 +29,13 @@ public class NsdService extends IntentService {
     public NsdService(String name) {
         super(name);
         Log.d(TAG, "Starting...");
-
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        NsdManager nsdManager = (NsdManager)getSystemService(Context.NSD_SERVICE);
-        mNsdHelper = new NsdHelper(nsdManager);
         final Intent intent = new Intent();
-
         mHandler = new Handler(this.getMainLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
-                if(msg.getData().containsKey(Connection.TAG)){
+                if (msg.getData().containsKey(Connection.TAG)) {
                     mNsdHelper.registerService(mConnection.getLocalPort());
-                } else if(msg.getData().containsKey(POSITION)){
+                } else if (msg.getData().containsKey(POSITION)) {
                     intent.setAction(IntentActions.SET_POSITION.name());
                     intent.putExtra(POSITION, msg);
                     sendBroadcast(intent);
@@ -52,14 +43,26 @@ public class NsdService extends IntentService {
                 return false;
             }
         });
-        mConnection = new Connection(mHandler);
-//        Log.d(TAG, mConnection.toString());
-//        mNsdHelper.registerService(mConnection.getLocalPort());
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
+    public void onStart(Intent intent, int startId) {
+        super.onStart(intent, startId);
+        if(mNsdHelper==null){
+            NsdManager nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
+            mNsdHelper = new NsdHelper(nsdManager, mHandler);
+        }
+        if (mConnection == null) {
+            mConnection = new Connection(mHandler);
+        }
+    }
+
+    @Override
+    protected void onHandleIntent(final Intent intent) {
         Log.d(TAG, "" + intent.getAction());
+        if(mConnection!=null) {
+            mNsdHelper.discoverServices();
+        }
     }
 
 

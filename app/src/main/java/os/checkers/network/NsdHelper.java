@@ -15,19 +15,29 @@ package os.checkers.network;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
+
+
 public class NsdHelper {
+    private final Handler mHandler;
     NsdManager mNsdManager;
     NsdManager.ResolveListener mResolveListener;
     NsdManager.DiscoveryListener mDiscoveryListener;
     NsdManager.RegistrationListener mRegistrationListener;
     public static final String SERVICE_TYPE = "_http._tcp.";
     public static final String TAG = "NsdHelper";
+    public static final String SERVICE_FOUND = "service_found";
+
     public String mServiceName = "Checkers";
     NsdServiceInfo mService;
-    public NsdHelper(NsdManager nsdManager) {
+    public NsdHelper(NsdManager nsdManager, Handler handler) {
+        mHandler = handler;
         mNsdManager = nsdManager;
     }
     public void initializeNsd() {
@@ -86,6 +96,11 @@ public class NsdHelper {
                     return;
                 }
                 mService = serviceInfo;
+                Message msg = new Message();
+                Bundle bundle = new Bundle();
+                bundle.putInt(SERVICE_FOUND, 0);
+                msg.setData(bundle);
+                mHandler.sendMessage(msg);
             }
         };
     }
