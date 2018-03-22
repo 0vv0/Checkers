@@ -23,10 +23,12 @@ import java.util.Observer;
 
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
     private static final String TAG = MainActivity.class.getName();
-    public enum Intents{
+
+    public enum Intents {
         PLAYERS_LIST,
         DISCONNECTED,
         SET_POSITION;
+
         static boolean containsName(String name) {
             for (int i = 0; i < values().length; i++) {
                 if (values()[i].name().equals(name)) {
@@ -36,6 +38,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             return false;
         }
     }
+
     private TextView mTextView;
 
     //    private Field field;
@@ -61,8 +64,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                     Toast
                             .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_LONG)
                             .show();
-                    mTextView.setText(intent.getStringExtra(NsdService.POSITION));
-                    Field.fromJson(intent.getStringExtra(NsdService.POSITION));
+                    if (intent.getStringExtra(NsdService.POSITION) != null) {
+                        mTextView.setText(intent.getStringExtra(NsdService.POSITION));
+                        Field.fromJson(intent.getStringExtra(NsdService.POSITION));
+                    }
                     break;
             }
         }

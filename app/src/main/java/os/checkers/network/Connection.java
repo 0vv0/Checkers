@@ -13,14 +13,18 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class Connection {
+public class Connection{
     private GameServer mGameServer;
     private GameClient mGameClient;
     public static final String TAG = Connection.class.getName();
-    private Socket mSocket;
+    public static final String PORT = "port";
+    public static final String POSITION = "position";
+    private static Socket mSocket;
     private int mPort = -1;
     private Handler mHandler;
+    public volatile String position = "";
     public Connection(Handler mHandler) {
+        super();
         mGameServer = new GameServer();
         this.mHandler = mHandler;
     }
@@ -43,12 +47,13 @@ public class Connection {
     }
     public void setLocalPort(int port) {
         mPort = port;
+        updateMessages(PORT);
     }
-    public synchronized void updateMessages(String msg, boolean local) {
-        Log.e(TAG, "Updating message: " + msg);
+    public void updateMessages(String msg) {
+        Log.e(TAG, msg);
         Message message = new Message();
         Bundle bundle = new Bundle();
-        bundle.putString(NsdService.POSITION, msg);
+        bundle.putString(TAG, msg);
         message.setData(bundle);
         mHandler.sendMessage(message);
     }
@@ -71,6 +76,10 @@ public class Connection {
     private Socket getSocket() {
         return mSocket;
     }
+    public void setPosition(String position){
+        this.position = position;
+        updateMessages(POSITION);
+    }
 
     @Override
     public String toString() {
@@ -84,6 +93,20 @@ public class Connection {
     }
 
     private class GameServer {
+        @Override
+        protected void finalize() throws Throwable {
+            try {
+                if(mServerSocket!=null) {
+                    mServerSocket.close();
+                }
+                if(mThread!=null){
+                    mThread.interrupt();
+                }
+            } finally {
+                super.finalize();
+            }
+        }
+
         ServerSocket mServerSocket = null;
         Thread mThread = null;
         GameServer() {
@@ -106,11 +129,6 @@ public class Connection {
                     // used.  Just grab an available one  and advertise it via Nsd.
                     mServerSocket = new ServerSocket(0);
                     setLocalPort(mServerSocket.getLocalPort());
-                    Message msg = new Message();
-                    Bundle bundle = new Bundle();
-                    bundle.putInt(TAG, getLocalPort());
-                    msg.setData(bundle);
-                    mHandler.sendMessage(msg);
                     while (!Thread.currentThread().isInterrupted()) {
                         Log.d(TAG, "ServerSocket Created, awaiting connection");
                         setSocket(mServerSocket.accept());
@@ -132,6 +150,21 @@ public class Connection {
         }
     }
     private class GameClient {
+        @Override
+        protected void finalize() throws Throwable {
+            try {
+                if(mSendThread!=null){
+                    mSendThread.interrupt();
+                }
+                if(mRecThread!=null){
+                    mRecThread.interrupt();
+                }
+                tearDown();
+            }finally {
+                super.finalize();
+            }
+        }
+
         private InetAddress mAddress;
         private int PORT;
         private final String CLIENT_TAG = "GameClient";
@@ -148,7 +181,7 @@ public class Connection {
             BlockingQueue<String> mMessageQueue;
             private int QUEUE_CAPACITY = 10;
             SendingThread() {
-                mMessageQueue = new ArrayBlockingQueue<String>(QUEUE_CAPACITY);
+                mMessageQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
             }
             @Override
             public void run() {
@@ -184,15 +217,17 @@ public class Connection {
                     input = new BufferedReader(new InputStreamReader(
                             mSocket.getInputStream()));
                     while (!Thread.currentThread().isInterrupted()) {
+                        String msg = "";
                         String messageStr = null;
                         messageStr = input.readLine();
                         if (messageStr != null) {
                             Log.d(CLIENT_TAG, "Read from the stream: " + messageStr);
-                            updateMessages(messageStr, false);
+                            msg+=messageStr;
                         } else {
                             Log.d(CLIENT_TAG, "The nulls! The nulls!");
                             break;
                         }
+                        setPosition(msg);
                     }
                     input.close();
                 } catch (IOException e) {
@@ -220,7 +255,6 @@ public class Connection {
                                 new OutputStreamWriter(getSocket().getOutputStream())), true);
                 out.println(msg);
                 out.flush();
-                updateMessages(msg, true);
             } catch (UnknownHostException e) {
                 Log.d(CLIENT_TAG, "Unknown Host", e);
             } catch (IOException e) {
@@ -229,6 +263,17 @@ public class Connection {
                 Log.d(CLIENT_TAG, "Error3", e);
             }
             Log.d(CLIENT_TAG, "Client sent message: " + msg);
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            if(mSocket!=null){
+                mSocket.close();
+            }
+        }finally {
+            super.finalize();
         }
     }
 }

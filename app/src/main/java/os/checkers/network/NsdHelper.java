@@ -23,33 +23,46 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import java.lang.ref.WeakReference;
+
 
 public class NsdHelper {
     private final Handler mHandler;
-    NsdManager mNsdManager;
+    private NsdManager mNsdManager;
+    private static WeakReference<NsdHelper> killThisOnReCreate;
+
     NsdManager.ResolveListener mResolveListener;
     NsdManager.DiscoveryListener mDiscoveryListener;
     NsdManager.RegistrationListener mRegistrationListener;
+    public static final String RESOLVED = "resolved";
+    public static final String REGISTERED = "registered";
     public static final String SERVICE_TYPE = "_http._tcp.";
     public static final String TAG = "NsdHelper";
-    public static final String SERVICE_FOUND = "service_found";
 
     public String mServiceName = "Checkers";
     NsdServiceInfo mService;
+
     public NsdHelper(NsdManager nsdManager, Handler handler) {
+        if (killThisOnReCreate != null) {
+            killThisOnReCreate.get().tearDown();
+        }
         mHandler = handler;
         mNsdManager = nsdManager;
+        killThisOnReCreate = new WeakReference<>(this);
     }
+
     public void initializeNsd() {
         initializeResolveListener();
         //mNsdManager.init(mContext.getMainLooper(), this);
     }
+
     public void initializeDiscoveryListener() {
         mDiscoveryListener = new NsdManager.DiscoveryListener() {
             @Override
             public void onDiscoveryStarted(String regType) {
                 Log.d(TAG, "Service discovery started");
             }
+
             @Override
             public void onServiceFound(NsdServiceInfo service) {
                 Log.d(TAG, "Service discovery success" + service);
@@ -57,10 +70,11 @@ public class NsdHelper {
                     Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
                 } else if (service.getServiceName().equals(mServiceName)) {
                     Log.d(TAG, "Same machine: " + mServiceName);
-                } else if (service.getServiceName().contains(mServiceName)){
+                } else if (service.getServiceName().contains(mServiceName)) {
                     mNsdManager.resolveService(service, mResolveListener);
                 }
             }
+
             @Override
             public void onServiceLost(NsdServiceInfo service) {
                 Log.e(TAG, "service lost" + service);
@@ -68,26 +82,31 @@ public class NsdHelper {
                     mService = null;
                 }
             }
+
             @Override
             public void onDiscoveryStopped(String serviceType) {
                 Log.i(TAG, "Discovery stopped: " + serviceType);
             }
+
             @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
                 Log.e(TAG, "Discovery failed: Error code:" + errorCode);
             }
+
             @Override
             public void onStopDiscoveryFailed(String serviceType, int errorCode) {
                 Log.e(TAG, "Discovery failed: Error code:" + errorCode);
             }
         };
     }
+
     public void initializeResolveListener() {
         mResolveListener = new NsdManager.ResolveListener() {
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
                 Log.e(TAG, "Resolve failed" + errorCode);
             }
+
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
@@ -96,51 +115,58 @@ public class NsdHelper {
                     return;
                 }
                 mService = serviceInfo;
-                Message msg = new Message();
-                Bundle bundle = new Bundle();
-                bundle.putInt(SERVICE_FOUND, 0);
-                msg.setData(bundle);
-                mHandler.sendMessage(msg);
+                sendMessage(RESOLVED);
             }
         };
     }
+
     public void initializeRegistrationListener() {
         mRegistrationListener = new NsdManager.RegistrationListener() {
             @Override
             public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
                 mServiceName = NsdServiceInfo.getServiceName();
                 Log.d(TAG, "Service registered: " + mServiceName);
+                sendMessage(REGISTERED);
             }
+
             @Override
             public void onRegistrationFailed(NsdServiceInfo arg0, int arg1) {
                 Log.d(TAG, "Service registration failed: " + arg1);
             }
+
             @Override
             public void onServiceUnregistered(NsdServiceInfo arg0) {
                 Log.d(TAG, "Service unregistered: " + arg0.getServiceName());
             }
+
             @Override
             public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
                 Log.d(TAG, "Service unregistration failed: " + errorCode);
             }
         };
     }
+
     public void registerService(int port) {
+        if (killThisOnReCreate != null) {
+            killThisOnReCreate.get().tearDown();
+        }
         tearDown();  // Cancel any previous registration request
         initializeRegistrationListener();
-        NsdServiceInfo serviceInfo  = new NsdServiceInfo();
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setPort(port);
         serviceInfo.setServiceName(mServiceName);
         serviceInfo.setServiceType(SERVICE_TYPE);
         mNsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
+
     public void discoverServices() {
         stopDiscovery();  // Cancel any existing discovery request
         initializeDiscoveryListener();
         mNsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
     }
+
     public void stopDiscovery() {
         if (mDiscoveryListener != null) {
             try {
@@ -150,9 +176,11 @@ public class NsdHelper {
             mDiscoveryListener = null;
         }
     }
+
     public NsdServiceInfo getChosenServiceInfo() {
         return mService;
     }
+
     public void tearDown() {
         if (mRegistrationListener != null) {
             try {
@@ -161,6 +189,27 @@ public class NsdHelper {
             } finally {
             }
             mRegistrationListener = null;
+        }
+        stopDiscovery();
+    }
+
+    public void sendMessage(String value) {
+        Bundle bundle = new Bundle();
+        bundle.putString(TAG, value);
+        Message msg = new Message();
+        msg.setData(bundle);
+        mHandler.sendMessage(msg);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            tearDown();
+            if (killThisOnReCreate != null) {
+                killThisOnReCreate.get().finalize();
+            }
+        } finally {
+            super.finalize();
         }
     }
 }
