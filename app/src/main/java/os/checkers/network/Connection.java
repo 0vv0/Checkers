@@ -268,6 +268,7 @@ public class Connection{
 
     @Override
     protected void finalize() throws Throwable {
+        Log.d(TAG, "finalize()");
         try {
             if(mSocket!=null){
                 mSocket.close();

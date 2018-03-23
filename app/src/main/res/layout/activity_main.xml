@@ -10,6 +10,9 @@
                   android:orientation="vertical">
 
     </LinearLayout>
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/info"/>
     <Button android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Make a move"
@@ -72,7 +75,5 @@
                     android:onClick="exit"/>
         </LinearLayout>
     </LinearLayout>
-    <TextView android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:id="@+id/info"/>
+
 </LinearLayout>

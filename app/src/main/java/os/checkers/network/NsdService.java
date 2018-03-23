@@ -12,6 +12,7 @@ import android.util.Log;
 public class NsdService extends IntentService {
     public final static String TAG = NsdService.class.getName();
     public final static String POSITION = "position";
+    public final static String PLAYERS = "players";
 
     private NsdHelper mNsdHelper;
     private Connection mConnection;
@@ -56,14 +57,6 @@ public class NsdService extends IntentService {
         }
     }
 
-    private void sendBroadcastWithPosition(String position) {
-        Log.d(TAG, "Sending position via broadcast...");
-        Intent intent = new Intent();
-        intent.setAction(IntentActions.SET_POSITION.name());
-        intent.putExtra(POSITION, position);
-        sendBroadcast(intent);
-    }
-
     @Override
     protected void onHandleIntent(final Intent intent) {
         Log.d(TAG, "" + intent.getAction());
@@ -90,11 +83,12 @@ public class NsdService extends IntentService {
                             break;
                     }
                 } else if (msgData.containsKey(POSITION)) {
-                    sendBroadcastWithPosition(msgData.getString(POSITION));
+                    sendIntentWithPosition(msgData.getString(POSITION));
                 } else if (msgData.containsKey(NsdHelper.TAG)) {
                     switch (msgData.getString(NsdHelper.TAG)) {
                         case NsdHelper.RESOLVED:
                             Log.d(TAG, "Service resolved...");
+                            sendIntent(IntentActions.LIST_PLAYERS.name(), PLAYERS, mNsdHelper.getChosenServiceInfo().toString() );
                             break;
                         case NsdHelper.REGISTERED:
                             Log.d(TAG, "Service registered...");
@@ -105,6 +99,20 @@ public class NsdService extends IntentService {
             }
         };
     }
+
+    private void sendIntent(String action, String name, String value){
+        Intent intent = new Intent();
+        intent.setAction(action);
+        intent.putExtra(name, value);
+        sendBroadcast(intent);
+    }
+
+    private void sendIntentWithPosition(String position) {
+        Log.d(TAG, "Sending position via broadcast...");
+        sendIntent(IntentActions.SET_POSITION.name(), POSITION, position);
+    }
+
+
 
     @Override
     protected void finalize() throws Throwable {

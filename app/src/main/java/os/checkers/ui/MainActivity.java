@@ -24,21 +24,6 @@ import java.util.Observer;
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
     private static final String TAG = MainActivity.class.getName();
 
-    public enum Intents {
-        PLAYERS_LIST,
-        DISCONNECTED,
-        SET_POSITION;
-
-        static boolean containsName(String name) {
-            for (int i = 0; i < values().length; i++) {
-                if (values()[i].name().equals(name)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
     private TextView mTextView;
 
     //    private Field field;
@@ -47,22 +32,16 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (Intents.valueOf(intent.getAction())) {
-                case DISCONNECTED:
-                    Toast
-                            .makeText(getApplicationContext(), "Disconnected...", Toast.LENGTH_SHORT)
-                            .show();
-                    mTextView.setText("Disconnected...");
-                    break;
-                case PLAYERS_LIST:
+            switch (IntentActions.valueOf(intent.getAction())) {
+                case LIST_PLAYERS:
                     Toast
                             .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
                             .show();
-                    mTextView.setText(intent.getBundleExtra("list").toString());
+                    mTextView.setText(intent.getStringExtra(NsdService.PLAYERS));
                     break;
                 case SET_POSITION:
                     Toast
-                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_LONG)
+                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_SHORT)
                             .show();
                     if (intent.getStringExtra(NsdService.POSITION) != null) {
                         mTextView.setText(intent.getStringExtra(NsdService.POSITION));
@@ -86,9 +65,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onResume();
 
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Intents.PLAYERS_LIST.name());
-        intentFilter.addAction(Intents.SET_POSITION.name());
-        intentFilter.addAction(Intents.DISCONNECTED.name());
+        intentFilter.addAction(IntentActions.LIST_PLAYERS.name());
+        intentFilter.addAction(IntentActions.SET_POSITION.name());
         registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);
