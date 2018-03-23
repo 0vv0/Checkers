@@ -51,11 +51,6 @@ public class NsdHelper {
         killThisOnReCreate = new WeakReference<>(this);
     }
 
-    public void initializeNsd() {
-        initializeResolveListener();
-        //mNsdManager.init(mContext.getMainLooper(), this);
-    }
-
     public void initializeDiscoveryListener() {
         mDiscoveryListener = new NsdManager.DiscoveryListener() {
             @Override
@@ -162,6 +157,7 @@ public class NsdHelper {
 
     public void discoverServices() {
         stopDiscovery();  // Cancel any existing discovery request
+        initializeResolveListener();
         initializeDiscoveryListener();
         mNsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);

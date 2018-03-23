@@ -14,9 +14,9 @@ public class NsdService extends IntentService {
     public final static String POSITION = "position";
     public final static String PLAYERS = "players";
 
-    private NsdHelper mNsdHelper;
-    private Connection mConnection;
-    private Handler mHandler;
+    private volatile static NsdHelper mNsdHelper;
+    private volatile static Connection mConnection;
+    private volatile static Handler mHandler;
 
     public NsdService() {
         this(TAG);
@@ -46,7 +46,6 @@ public class NsdService extends IntentService {
             NsdManager nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
             mNsdHelper = new NsdHelper(nsdManager, mHandler);
         }
-
     }
 
     private void registerService() {
@@ -67,11 +66,22 @@ public class NsdService extends IntentService {
                     if (mNsdHelper != null) {
                         mNsdHelper.discoverServices();
                     }
+                    break;
+                case SEND_POSITION:
+                    if(mConnection!=null){
+                        mConnection.sendMessage(intent.getStringExtra(POSITION));
+                    }
+                    break;
+                case CONNECT:
+                    if(mConnection!=null&&mNsdHelper!=null&&mNsdHelper.getChosenServiceInfo()!=null){
+                        mConnection.connectToServer(mNsdHelper.getChosenServiceInfo().getHost(), mNsdHelper.getChosenServiceInfo().getPort());
+                    }
+                    break;
             }
         }
     }
 
-    private Handler.Callback getCallback(){
+    private Handler.Callback getCallback() {
         return new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
@@ -88,7 +98,7 @@ public class NsdService extends IntentService {
                     switch (msgData.getString(NsdHelper.TAG)) {
                         case NsdHelper.RESOLVED:
                             Log.d(TAG, "Service resolved...");
-                            sendIntent(IntentActions.LIST_PLAYERS.name(), PLAYERS, mNsdHelper.getChosenServiceInfo().toString() );
+                            sendIntent(IntentActions.LIST_PLAYERS.name(), PLAYERS, mNsdHelper.getChosenServiceInfo().toString());
                             break;
                         case NsdHelper.REGISTERED:
                             Log.d(TAG, "Service registered...");
@@ -100,7 +110,7 @@ public class NsdService extends IntentService {
         };
     }
 
-    private void sendIntent(String action, String name, String value){
+    private void sendIntent(String action, String name, String value) {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtra(name, value);
@@ -112,19 +122,19 @@ public class NsdService extends IntentService {
         sendIntent(IntentActions.SET_POSITION.name(), POSITION, position);
     }
 
-
-
-    @Override
-    protected void finalize() throws Throwable {
-        try {
-            if(mNsdHelper!=null){
-                mNsdHelper.finalize();
-            }
-            if(mConnection!=null){
-                mConnection.finalize();
-            }
-        }finally {
-            super.finalize();
+    public static void exit() {
+        if (mConnection != null) {
+            mConnection.tearDown();
+            mConnection = null;
         }
+        if (mNsdHelper != null) {
+            mNsdHelper.tearDown();
+            mNsdHelper = null;
+        }
+        if (mHandler != null) {
+            mHandler = null;
+        }
+
+
     }
 }

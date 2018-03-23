@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +26,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private static final String TAG = MainActivity.class.getName();
 
     private TextView mTextView;
+    private Button mConnectButton;
 
     //    private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
@@ -58,6 +60,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mTextView = (TextView) findViewById(R.id.info);
+        mConnectButton = (Button) findViewById(R.id.connect);
     }
 
     @Override
@@ -139,6 +142,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
     public void exit(View view) {
         save(null);
+        NsdService.exit();
         System.exit(0);
     }
 
@@ -177,6 +181,13 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             }
             selectedSquare.clear();
             Field.getInstance().move(coordinates);
+
+            Intent intent = new Intent(getApplicationContext(), NsdService.class);
+            intent.setAction(IntentActions.SEND_POSITION.name());
+
+            Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, intent.getAction());
+            this.startService(intent);
         }
     }
 
@@ -186,6 +197,14 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         intent.setAction(IntentActions.REQUEST_PLAYERS_LIST.name());
 
         Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, intent.getAction());
+        this.startService(intent);
+    }
+
+    public void connect(View v) {
+        Intent intent = new Intent(getApplicationContext(), NsdService.class);
+        intent.setAction(IntentActions.CONNECT.name());
+        Toast.makeText(this, "connecting ...", Toast.LENGTH_SHORT).show();
         Log.d(TAG, intent.getAction());
         this.startService(intent);
     }

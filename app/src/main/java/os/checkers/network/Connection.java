@@ -35,6 +35,7 @@ public class Connection{
         }
     }
     public void connectToServer(InetAddress address, int port) {
+        Log.d(TAG, "Connecting to " + address + ":" + port);
         mGameClient = new GameClient(address, port);
     }
     public void sendMessage(String msg) {

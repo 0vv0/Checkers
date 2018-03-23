@@ -5,7 +5,9 @@ public enum IntentActions {
     LIST_PLAYERS,
     WIFI_ERROR,
     SET_POSITION,
-    GET_POSITION;
+    GET_POSITION,
+    SEND_POSITION,
+    CONNECT;
     static boolean containsName(String name) {
         for (int i = 0; i < values().length; i++) {
             if (values()[i].name().equals(name)) {
