@@ -96,11 +96,11 @@ public class NsdService extends IntentService {
                     sendIntentWithPosition(msgData.getString(POSITION));
                 } else if (msgData.containsKey(NsdHelper.TAG)) {
                     switch (msgData.getString(NsdHelper.TAG)) {
-                        case NsdHelper.RESOLVED:
+                        case NsdHelperStringLiterals.RESOLVED:
                             Log.d(TAG, "Service resolved...");
-                            sendIntent(IntentActions.LIST_PLAYERS.name(), PLAYERS, mNsdHelper.getChosenServiceInfo().toString());
+                            sendIntent(IntentActions.LIST_PLAYERS1.name(), PLAYERS, mNsdHelper.getChosenServiceInfo().toString());
                             break;
-                        case NsdHelper.REGISTERED:
+                        case NsdHelperStringLiterals.REGISTERED:
                             Log.d(TAG, "Service registered...");
                             break;
                     }

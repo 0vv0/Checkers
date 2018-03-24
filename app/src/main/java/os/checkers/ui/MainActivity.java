@@ -15,6 +15,7 @@ import os.checkers.model.Color;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
 import os.checkers.network.IntentActions;
+import os.checkers.network.NsdForCheckers;
 import os.checkers.network.NsdService;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private static final String TAG = MainActivity.class.getName();
 
     private TextView mTextView;
-    private Button mConnectButton;
+    private List<String> mPlayers = new ArrayList<>();
 
     //    private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
@@ -34,33 +35,56 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (IntentActions.valueOf(intent.getAction())) {
-                case LIST_PLAYERS:
-                    Toast
-                            .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
-                            .show();
-                    mTextView.setText(intent.getStringExtra(NsdService.PLAYERS));
-                    break;
-                case SET_POSITION:
-                    Toast
-                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_SHORT)
-                            .show();
-                    if (intent.getStringExtra(NsdService.POSITION) != null) {
-                        mTextView.setText(intent.getStringExtra(NsdService.POSITION));
-                        Field.fromJson(intent.getStringExtra(NsdService.POSITION));
-                    }
-                    break;
+//            switch (IntentActions.valueOf(intent.getAction())) {
+//                case LIST_PLAYERS:
+//                    Toast
+//                            .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
+//                            .show();
+//                    mTextView.setText(intent.getStringExtra(NsdService.PLAYERS));
+//                    break;
+//                case SET_POSITION:
+//                    Toast
+//                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_SHORT)
+//                            .show();
+//                    if (intent.getStringExtra(NsdService.POSITION) != null) {
+//                        mTextView.setText(intent.getStringExtra(NsdService.POSITION));
+//                        Field.fromJson(intent.getStringExtra(NsdService.POSITION));
+//                    }
+//                    break;
+//            }
+            if (intent.hasCategory(NsdForCheckers.TAG)) {
+                if (intent.hasExtra(NsdForCheckers.Action.ADD_PLAYER)) {
+                    addPlayer(intent.getParcelableExtra(NsdForCheckers.Action.ADD_PLAYER).toString());
+                }
+                if (intent.hasExtra(NsdForCheckers.Action.REMOVE_PLAYER)) {
+                    removePlayer(intent.getParcelableExtra(NsdForCheckers.Action.ADD_PLAYER).toString());
+                }
+                update(mTextView, mPlayers);
             }
         }
     };
 
+    private void addPlayer(String player) {
+        mPlayers.add(player.intern());
+    }
+
+    private void removePlayer(String player) {
+        mPlayers.remove(player.intern());
+    }
+
+    private void update(final TextView view, List<String> players) {
+        StringBuilder p = new StringBuilder();
+        for (String player : players) {
+            p.append(player);
+        }
+        view.setText(p);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mTextView = (TextView) findViewById(R.id.info);
-        mConnectButton = (Button) findViewById(R.id.connect);
     }
 
     @Override
@@ -68,8 +92,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onResume();
 
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(IntentActions.LIST_PLAYERS.name());
-        intentFilter.addAction(IntentActions.SET_POSITION.name());
+        intentFilter.addAction(NsdForCheckers.TAG);
         registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);
@@ -182,31 +205,41 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             selectedSquare.clear();
             Field.getInstance().move(coordinates);
 
-            Intent intent = new Intent(getApplicationContext(), NsdService.class);
-            intent.setAction(IntentActions.SEND_POSITION.name());
-
-            Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, intent.getAction());
-            this.startService(intent);
+//            Intent intent = new Intent(getApplicationContext(), NsdService.class);
+//            intent.setAction(IntentActions.SEND_POSITION.name());
+//
+//            Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
+//            Log.d(TAG, intent.getAction());
+//            this.startService(intent);
         }
     }
 
     public void list(View v) {
-        Intent intent = new Intent();
-        intent.setClass(getApplicationContext(), NsdService.class);
-        intent.setAction(IntentActions.REQUEST_PLAYERS_LIST.name());
-
         Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, intent.getAction());
-        this.startService(intent);
+        Log.d(TAG, "searching...");
+        new Thread("service") {
+            @Override
+            public void run() {
+                Intent intent = new Intent(getApplicationContext(), NsdForCheckers.class);
+                intent.setAction(IntentActions.SEARCH);
+                startService(intent);
+            }
+        }.start();
+
     }
 
     public void connect(View v) {
-        Intent intent = new Intent(getApplicationContext(), NsdService.class);
-        intent.setAction(IntentActions.CONNECT.name());
-        Toast.makeText(this, "connecting ...", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, intent.getAction());
-        this.startService(intent);
+        Toast.makeText(this, "stopping search ...", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "stopping search...");
+        mPlayers.clear();
+        new Thread("service") {
+            @Override
+            public void run() {
+                Intent intent = new Intent(getApplicationContext(), NsdForCheckers.class);
+                intent.setAction(IntentActions.STOP);
+                startService(intent);
+            }
+        }.start();
     }
 
     @Override
