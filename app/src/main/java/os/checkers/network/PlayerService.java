@@ -83,7 +83,7 @@ public class PlayerService extends Service {
         }
         // If we get killed, after returning from here, restart
         Log.d(TAG, "onStartCommand out " + Thread.currentThread().getName());
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
