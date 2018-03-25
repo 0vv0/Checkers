@@ -10,6 +10,7 @@ public enum IntentActions {
     CONNECT;
     public static final String STOP = "stop";
     public static final String SEARCH = "start searching players";
+    public static final String SEND = "send position";
 
     static boolean containsName(String name) {
         for (int i = 0; i < values().length; i++) {

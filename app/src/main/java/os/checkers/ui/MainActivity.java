@@ -15,8 +15,7 @@ import os.checkers.model.Color;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
 import os.checkers.network.IntentActions;
-import os.checkers.network.NsdForCheckers;
-import os.checkers.network.NsdService;
+import os.checkers.network.PlayerService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,12 +51,12 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 //                    }
 //                    break;
 //            }
-            if (intent.hasCategory(NsdForCheckers.TAG)) {
-                if (intent.hasExtra(NsdForCheckers.Action.ADD_PLAYER)) {
-                    addPlayer(intent.getParcelableExtra(NsdForCheckers.Action.ADD_PLAYER).toString());
+            if (intent.hasCategory(PlayerService.TAG)) {
+                if (intent.hasExtra(PlayerService.Action.ADD_PLAYER)) {
+                    addPlayer(intent.getParcelableExtra(PlayerService.Action.ADD_PLAYER).toString());
                 }
-                if (intent.hasExtra(NsdForCheckers.Action.REMOVE_PLAYER)) {
-                    removePlayer(intent.getParcelableExtra(NsdForCheckers.Action.ADD_PLAYER).toString());
+                if (intent.hasExtra(PlayerService.Action.REMOVE_PLAYER)) {
+                    removePlayer(intent.getParcelableExtra(PlayerService.Action.REMOVE_PLAYER).toString());
                 }
                 update(mTextView, mPlayers);
             }
@@ -85,6 +84,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mTextView = (TextView) findViewById(R.id.info);
+        Log.d(TAG, Thread.currentThread().getName());
     }
 
     @Override
@@ -92,7 +92,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onResume();
 
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(NsdForCheckers.TAG);
+        intentFilter.addCategory(PlayerService.TAG);
         registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);
@@ -165,7 +165,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
     public void exit(View view) {
         save(null);
-        NsdService.exit();
+        connect(view);
         System.exit(0);
     }
 
@@ -205,41 +205,32 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             selectedSquare.clear();
             Field.getInstance().move(coordinates);
 
-//            Intent intent = new Intent(getApplicationContext(), NsdService.class);
-//            intent.setAction(IntentActions.SEND_POSITION.name());
-//
-//            Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
-//            Log.d(TAG, intent.getAction());
-//            this.startService(intent);
+            Intent intent = new Intent(IntentActions.SEND);
+            intent.setPackage(this.getPackageName());
+            Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, intent.getAction());
+            this.startService(intent);
         }
     }
 
     public void list(View v) {
         Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
         Log.d(TAG, "searching...");
-        new Thread("service") {
-            @Override
-            public void run() {
-                Intent intent = new Intent(getApplicationContext(), NsdForCheckers.class);
-                intent.setAction(IntentActions.SEARCH);
-                startService(intent);
-            }
-        }.start();
-
+        startService(PlayerService.Action.LIST, PlayerService.TAG, PlayerService.class);
     }
 
     public void connect(View v) {
         Toast.makeText(this, "stopping search ...", Toast.LENGTH_SHORT).show();
         Log.d(TAG, "stopping search...");
         mPlayers.clear();
-        new Thread("service") {
-            @Override
-            public void run() {
-                Intent intent = new Intent(getApplicationContext(), NsdForCheckers.class);
-                intent.setAction(IntentActions.STOP);
-                startService(intent);
-            }
-        }.start();
+        startService(PlayerService.Action.STOP, PlayerService.TAG, PlayerService.class);
+    }
+
+    private void startService(String action, String category, Class clazz) {
+        Intent intent = new Intent(this, clazz);
+        intent.setAction(action);
+        intent.addCategory(category);
+        startService(intent);
     }
 
     @Override

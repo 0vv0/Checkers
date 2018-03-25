@@ -1,49 +1,34 @@
 package os.checkers.network;
 
+import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
-
-public class Discovery implements NsdManager.DiscoveryListener, NsdManager.ResolveListener {
-    public static final String TAG = Discovery.class.getName();
-    private static volatile Discovery instance;
-    private final DiscoveryResolver mResolver;
-
-    private Discovery(final DiscoveryResolver resolver) {
-        mResolver = resolver;
-    }
-
-    public static Discovery getInstance(final DiscoveryResolver resolver) {
-        if (instance == null) {
-            synchronized (Discovery.class) {
-                instance = new Discovery(resolver);
-            }
-        }
-        return instance;
-    }
+public abstract class Discovery implements NsdManager.DiscoveryListener, NsdManager.ResolveListener {
+    final String TAG = Discovery.class.getName();
 
     @Override
     public void onStartDiscoveryFailed(String nsdService, int i) {
-        Log.d(TAG, "Start discover for " + nsdService + " failed: " + i);
+        Log.d(TAG, "Start discovery for " + (nsdService != null ? nsdService : "null") + " failed: " + i);
 //        NsdHelper.sendMessage(TAG, NsdHelperStringLiterals.DISCOVERY_START_FAILED, mHandler);
     }
 
     @Override
     public void onStopDiscoveryFailed(String nsdService, int i) {
-        Log.d(TAG, "Start discover for " + nsdService + " failed: " + i);
+        Log.d(TAG, "Stop discovery for " + (nsdService != null ? nsdService : "null") + " failed: " + i);
 //        NsdHelper.sendMessage(TAG, NsdHelperStringLiterals.DISCOVERY_STOP_FAILED, mHandler);
     }
 
     @Override
     public void onDiscoveryStarted(String nsdService) {
-        Log.d(TAG, "Started discovery: " + nsdService);
+        Log.d(TAG, "Started discovery: " + (nsdService != null ? nsdService : "null"));
 //        NsdHelper.sendMessage(TAG, NsdHelperStringLiterals.DISCOVERY_STARTED, mHandler);
     }
 
     @Override
     public void onDiscoveryStopped(String nsdService) {
-        Log.d(TAG, "Discovery stopped: " + nsdService);
+        Log.d(TAG, "Discovery stopped: " + (nsdService != null ? nsdService : "null"));
 //        NsdHelper.sendMessage(TAG, NsdHelperStringLiterals.DISCOVERY_STOPPED, mHandler);
     }
 
@@ -61,19 +46,26 @@ public class Discovery implements NsdManager.DiscoveryListener, NsdManager.Resol
     }
 
     @Override
-    public void onServiceLost(NsdServiceInfo serviceInfo) {
-        mResolver.onLost(serviceInfo);
-    }
-
-    @Override
-    public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int i) {
-        Log.d(TAG, "Resolve for " + nsdServiceInfo.getServiceName() + " failed: " + i);
+    public void onResolveFailed(NsdServiceInfo nsdService, int i) {
+        Log.d(TAG, "Resolve for " + (nsdService != null ? nsdService : "null") + " failed: " + i);
 //        NsdHelper.sendMessage(TAG, NsdHelperStringLiterals.RESOLVE_FAILED, mHandler);
     }
 
-    @Override
-    public void onServiceResolved(NsdServiceInfo serviceInfo) {
-        mResolver.onResolved(serviceInfo);
-    }
-
+//    @Override
+//    public void onServiceLost(NsdServiceInfo serviceInfo) {
+//        Log.d(TAG, "Lost the " + serviceInfo);
+//        Intent intent = new Intent(NsdForCheckers.Action.REMOVE_PLAYER);
+//        intent.addCategory(TAG);
+//        intent.putExtra(NsdForCheckers.Action.REMOVE_PLAYER, serviceInfo);
+//        sendBroadcast(intent);
+//    }
+//
+//    @Override
+//    public void onServiceResolved(NsdServiceInfo serviceInfo) {
+//        Log.d(TAG, "Resolved to " + serviceInfo);
+//        Intent intent = new Intent(NsdForCheckers.Action.ADD_PLAYER);
+//        intent.addCategory(TAG);
+//        intent.putExtra(NsdForCheckers.Action.ADD_PLAYER, serviceInfo);
+//        sendBroadcast(intent);
+//    }
 }
