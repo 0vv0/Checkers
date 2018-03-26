@@ -14,19 +14,18 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class Connection{
-    private GameServer mGameServer;
-    private GameClient mGameClient;
     public static final String TAG = Connection.class.getName();
     public static final String PORT = "port";
     public static final String POSITION = "position";
     private static Socket mSocket;
+    public String position = "";
+    private GameServer mGameServer;
+    private GameClient mGameClient;
     private int mPort = -1;
     private Handler mHandler;
-    public volatile String position = "";
-    public Connection(Handler mHandler) {
-        super();
+    public Connection(Handler handler) {
         mGameServer = new GameServer();
-        this.mHandler = mHandler;
+        this.mHandler = handler;
     }
     public void tearDown() {
         mGameServer.tearDown();
@@ -58,6 +57,11 @@ public class Connection{
         message.setData(bundle);
         mHandler.sendMessage(message);
     }
+
+    private Socket getSocket() {
+        return mSocket;
+    }
+
     private synchronized void setSocket(Socket socket) {
         Log.d(TAG, "setSocket being called.");
         if (socket == null) {
@@ -74,9 +78,7 @@ public class Connection{
         }
         mSocket = socket;
     }
-    private Socket getSocket() {
-        return mSocket;
-    }
+
     public void setPosition(String position){
         this.position = position;
         updateMessages(POSITION);
@@ -93,7 +95,26 @@ public class Connection{
                 '}';
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        Log.d(TAG, "finalize()");
+        try {
+            if(mSocket!=null){
+                mSocket.close();
+            }
+        }finally {
+            super.finalize();
+        }
+    }
+
     private class GameServer {
+        ServerSocket mServerSocket = null;
+        Thread mThread = null;
+        GameServer() {
+            mThread = new Thread(new ServerThread());
+            mThread.start();
+        }
+
         @Override
         protected void finalize() throws Throwable {
             try {
@@ -108,12 +129,6 @@ public class Connection{
             }
         }
 
-        ServerSocket mServerSocket = null;
-        Thread mThread = null;
-        GameServer() {
-            mThread = new Thread(new ServerThread());
-            mThread.start();
-        }
         public void tearDown() {
             mThread.interrupt();
             try {
@@ -150,7 +165,21 @@ public class Connection{
             }
         }
     }
+
     private class GameClient {
+        private final String CLIENT_TAG = "GameClient";
+        private InetAddress mAddress;
+        private int PORT;
+        private Thread mSendThread;
+        private Thread mRecThread;
+        GameClient(InetAddress address, int port) {
+            Log.d(CLIENT_TAG, "Creating GameClient");
+            this.mAddress = address;
+            this.PORT = port;
+            mSendThread = new Thread(new SendingThread());
+            mSendThread.start();
+        }
+
         @Override
         protected void finalize() throws Throwable {
             try {
@@ -166,18 +195,37 @@ public class Connection{
             }
         }
 
-        private InetAddress mAddress;
-        private int PORT;
-        private final String CLIENT_TAG = "GameClient";
-        private Thread mSendThread;
-        private Thread mRecThread;
-        GameClient(InetAddress address, int port) {
-            Log.d(CLIENT_TAG, "Creating GameClient");
-            this.mAddress = address;
-            this.PORT = port;
-            mSendThread = new Thread(new SendingThread());
-            mSendThread.start();
+        void tearDown() {
+            try {
+                getSocket().close();
+            } catch (IOException ioe) {
+                Log.e(CLIENT_TAG, "Error when closing server socket.");
+            }
         }
+
+        void sendMessage(String msg) {
+            try {
+                Socket socket = getSocket();
+                if (socket == null) {
+                    Log.d(CLIENT_TAG, "Socket is null, wtf?");
+                } else if (socket.getOutputStream() == null) {
+                    Log.d(CLIENT_TAG, "Socket output stream is null, wtf?");
+                }
+                PrintWriter out = new PrintWriter(
+                        new BufferedWriter(
+                                new OutputStreamWriter(getSocket().getOutputStream())), true);
+                out.println(msg);
+                out.flush();
+            } catch (UnknownHostException e) {
+                Log.d(CLIENT_TAG, "Unknown Host", e);
+            } catch (IOException e) {
+                Log.d(CLIENT_TAG, "I/O Exception", e);
+            } catch (Exception e) {
+                Log.d(CLIENT_TAG, "Error3", e);
+            }
+            Log.d(CLIENT_TAG, "Client sent message: " + msg);
+        }
+
         class SendingThread implements Runnable {
             BlockingQueue<String> mMessageQueue;
             private int QUEUE_CAPACITY = 10;
@@ -210,6 +258,7 @@ public class Connection{
                 }
             }
         }
+
         class ReceivingThread implements Runnable {
             @Override
             public void run() {
@@ -235,47 +284,6 @@ public class Connection{
                     Log.e(CLIENT_TAG, "Server loop error: ", e);
                 }
             }
-        }
-        void tearDown() {
-            try {
-                getSocket().close();
-            } catch (IOException ioe) {
-                Log.e(CLIENT_TAG, "Error when closing server socket.");
-            }
-        }
-        void sendMessage(String msg) {
-            try {
-                Socket socket = getSocket();
-                if (socket == null) {
-                    Log.d(CLIENT_TAG, "Socket is null, wtf?");
-                } else if (socket.getOutputStream() == null) {
-                    Log.d(CLIENT_TAG, "Socket output stream is null, wtf?");
-                }
-                PrintWriter out = new PrintWriter(
-                        new BufferedWriter(
-                                new OutputStreamWriter(getSocket().getOutputStream())), true);
-                out.println(msg);
-                out.flush();
-            } catch (UnknownHostException e) {
-                Log.d(CLIENT_TAG, "Unknown Host", e);
-            } catch (IOException e) {
-                Log.d(CLIENT_TAG, "I/O Exception", e);
-            } catch (Exception e) {
-                Log.d(CLIENT_TAG, "Error3", e);
-            }
-            Log.d(CLIENT_TAG, "Client sent message: " + msg);
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        Log.d(TAG, "finalize()");
-        try {
-            if(mSocket!=null){
-                mSocket.close();
-            }
-        }finally {
-            super.finalize();
         }
     }
 }
