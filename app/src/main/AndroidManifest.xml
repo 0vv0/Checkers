@@ -29,20 +29,11 @@
             </intent-filter>
         </activity>
 
-        <!-- <service android:name=".network.NsdService" android:exported="false" /> -->
-        <!-- <service android:name=".network.NsdForCheckers" android:exported="false" android:process=":nsdManager"> -->
-        <!-- <intent-filter> -->
-        <!-- <category android:name="os.checkers.network.NsdForCheckers" /> -->
-        <!-- </intent-filter> -->
-        <!-- </service> -->
         <service
                 android:name=".network.PlayerService"
                 android:exported="false">
             <intent-filter>
                 <category android:name="os.checkers.network.PlayerService"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.net.nsd.NsdManager.ACTION_NSD_STATE_CHANGED"/>
             </intent-filter>
         </service>
         <service

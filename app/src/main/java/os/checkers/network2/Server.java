@@ -4,43 +4,66 @@ import android.os.Handler;
 import android.util.Log;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server extends Thread {
     public static final String TAG = Server.class.getName();
+    public static final String REQUESTED_BY = "requested by: ";
+    public static final String LOCAL_ADDRESS = "local address: ";
+    public static final String LOCAL_PORT = "local port: ";
+    public static final String NO_PLAYER = "no player";
+    public static final int port = 0;
     private ServerSocket mServerSocket;
-    private int mPort;
-    private Handler mHandler;
-    private Thread mClient;
+    private MyHandler mHandler;
+    private Connection connection;
+    private InetAddress remoteAddress;
+    private volatile int remotePort = 0;
 
     public Server(Handler handler) {
-        this(0, handler);
+        assert handler != null;
+        this.mHandler = new MyHandler(handler);
+        connection = new Connection(mHandler);
     }
 
-    public Server(int port, Handler handler) {
-        this.mPort = port;
-        this.mHandler = handler;
+    public void send(String msg) {
+        if (remoteAddress == null || remotePort == 0) {
+            mHandler.sendMessage(TAG, NO_PLAYER);
+            return;
+        }
+        connection.sendTo(remoteAddress, remotePort, msg);
     }
+
+    public synchronized Server connect(InetAddress address, int port){
+        if(remoteAddress==null){
+            this.remoteAddress = address;
+            this.remotePort = port;
+        }
+        return this;
+    }
+
 
     @Override
     public void run() {
         try {
-            Log.d(TAG, "Try to listen on port: " + mPort);
-            mServerSocket = new ServerSocket(mPort);
-            mPort = mServerSocket.getLocalPort();
-            Log.d(TAG, "Will listen on port: " + mPort);
+            mServerSocket = new ServerSocket(port);
+            Log.d(TAG, "Will listen on: " + mServerSocket.getInetAddress() + ":" + mServerSocket.getLocalPort());
+
+            mHandler.sendMessage(TAG, LOCAL_PORT, mServerSocket.getLocalPort());
+            mHandler.sendMessage(TAG, LOCAL_ADDRESS, mServerSocket.getInetAddress());
+
             while (!Thread.currentThread().isInterrupted()) {
                 Log.d(TAG, "ServerSocket Created, awaiting connection");
                 Socket socket = mServerSocket.accept();
                 String remotePlayer = socket.getInetAddress() + ":" + socket.getPort();
-                sendMessage(remotePlayer);
+                mHandler.sendMessage(TAG, REQUESTED_BY + remotePlayer);
                 Log.d(TAG, "Connect requested from: " + remotePlayer);
-                if (mClient == null||!mClient.isAlive()) {//||mClient.isInterrupted()
-                    mClient = new Client(socket, mHandler);
-                    mClient.start();
-                } else {
-                    Log.d(TAG, "Some Client already bound. Ignore");
+                if(remotePort==0) {
+                    connect(socket.getInetAddress(), socket.getPort());
+                }
+                if(socket.getInetAddress().equals(remoteAddress)){
+                    connection.receiveFrom(socket);
                 }
             }
         } catch (IOException e) {
@@ -67,15 +90,7 @@ public class Server extends Thread {
             }
             mServerSocket = null;
         }
-        if(mClient!=null){
-            Log.d(TAG, "Try to interrupte Client thread...");
-            mClient.interrupt();
-            mClient = null;
-        }
+        connection = null;
     }
 
-    private void sendMessage(String message){
-        Log.d(TAG, "Try to send message:\n" + message);
-        new MyHandler(mHandler).sendMessage(TAG, message);
-    }
 }
