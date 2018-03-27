@@ -1,6 +1,5 @@
 package os.checkers.network2;
 
-import android.os.Handler;
 import android.util.Log;
 
 import java.io.*;
@@ -9,9 +8,6 @@ import java.net.Socket;
 
 public class Connection{
     public static final String TAG = Connection.class.getName();
-    public static final String C_INTERRUPTED = "Client thread interrupted";
-    public static final String RECEIVE = "received:";
-    public static final String SEND = "sent:";
     private final MyHandler mHandler;
 
     public Connection(MyHandler handler) {
@@ -27,10 +23,10 @@ public class Connection{
         new Thread(new SendingThread(mHandler, socket, msg)).start();
     }
 
-    private static synchronized void sendMessage(Handler handler, String message) {
-        Log.d(TAG, "Try to send message:\n" + message);
-        new MyHandler(handler).sendMessage(TAG, message);
-    }
+//    private static synchronized void sendMessage(Handler handler, String message) {
+//        Log.d(TAG, "Try to send message:\n" + message);
+//        new MyHandler(handler).sendMessage(TAG, message);
+//    }
 
     public void sendTo(InetAddress remoteAddress, int remotePort, String msg) {
         try {
@@ -66,7 +62,7 @@ public class Connection{
                 }
                 input.close();
                 socket.close();
-                handler.sendMessage(TAG,RECEIVE + msg);
+                handler.sendMessage(MyHandler.Type.UPDATE_POSITION, msg);
             } catch (IOException e) {
                 Log.e(TAG, "loop error: ", e);
             }
@@ -95,7 +91,7 @@ public class Connection{
                 out.write(msg);
                 out.close();
                 socket.close();
-                handler.sendMessage(TAG,SEND + msg);
+                handler.sendMessage(MyHandler.Type.SENT, msg);
             } catch (IOException e) {
                 Log.e(TAG, "loop error: ", e);
             }

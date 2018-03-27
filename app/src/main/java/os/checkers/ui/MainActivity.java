@@ -3,10 +3,11 @@ package os.checkers.ui;
 import android.app.Activity;
 import android.content.*;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,52 +17,54 @@ import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
 import os.checkers.network.IntentActions;
 import os.checkers.network.PlayerService;
+import os.checkers.network2.Server;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
+public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer, Handler.Callback {
     private static final String TAG = MainActivity.class.getName();
 
     private TextView mTextView;
     private List<String> mPlayers = new ArrayList<>();
+    private Server server;
 
     //    private Field field;
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player = Color.White;
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-//            switch (IntentActions.valueOf(intent.getAction())) {
-//                case LIST_PLAYERS:
-//                    Toast
-//                            .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
-//                            .show();
-//                    mTextView.setText(intent.getStringExtra(NsdService.PLAYERS));
-//                    break;
-//                case SET_POSITION:
-//                    Toast
-//                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_SHORT)
-//                            .show();
-//                    if (intent.getStringExtra(NsdService.POSITION) != null) {
-//                        mTextView.setText(intent.getStringExtra(NsdService.POSITION));
-//                        Field.fromJson(intent.getStringExtra(NsdService.POSITION));
-//                    }
-//                    break;
+//    private BroadcastReceiver receiver = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+////            switch (IntentActions.valueOf(intent.getAction())) {
+////                case LIST_PLAYERS:
+////                    Toast
+////                            .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
+////                            .show();
+////                    mTextView.setText(intent.getStringExtra(NsdService.PLAYERS));
+////                    break;
+////                case SET_POSITION:
+////                    Toast
+////                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_SHORT)
+////                            .show();
+////                    if (intent.getStringExtra(NsdService.POSITION) != null) {
+////                        mTextView.setText(intent.getStringExtra(NsdService.POSITION));
+////                        Field.fromJson(intent.getStringExtra(NsdService.POSITION));
+////                    }
+////                    break;
+////            }
+//            if (intent.hasCategory(PlayerService.TAG)) {
+//                if (intent.hasExtra(PlayerService.Action.ADD_PLAYER)) {
+//                    addPlayer(intent.getParcelableExtra(PlayerService.Action.ADD_PLAYER).toString());
+//                }
+//                if (intent.hasExtra(PlayerService.Action.REMOVE_PLAYER)) {
+//                    removePlayer(intent.getParcelableExtra(PlayerService.Action.REMOVE_PLAYER).toString());
+//                }
+//                update(mTextView, mPlayers);
 //            }
-            if (intent.hasCategory(PlayerService.TAG)) {
-                if (intent.hasExtra(PlayerService.Action.ADD_PLAYER)) {
-                    addPlayer(intent.getParcelableExtra(PlayerService.Action.ADD_PLAYER).toString());
-                }
-                if (intent.hasExtra(PlayerService.Action.REMOVE_PLAYER)) {
-                    removePlayer(intent.getParcelableExtra(PlayerService.Action.REMOVE_PLAYER).toString());
-                }
-                update(mTextView, mPlayers);
-            }
-        }
-    };
+//        }
+//    };
 
     private void addPlayer(String player) {
         mPlayers.add(player.intern());
@@ -90,10 +93,13 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     @Override
     protected void onResume() {
         super.onResume();
-
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addCategory(PlayerService.TAG);
-        registerReceiver(receiver, intentFilter);
+        if(server==null||!server.isAlive()){
+            server = new Server(new Handler(this));
+            server.start();
+        }
+//        IntentFilter intentFilter = new IntentFilter();
+//        intentFilter.addCategory(PlayerService.TAG);
+//        registerReceiver(receiver, intentFilter);
 
         Field.getInstance().addObserver(this);
         load(null);
@@ -103,7 +109,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     protected void onPause() {
         save(null);
         Field.getInstance().deleteObserver(this);
-        unregisterReceiver(receiver);
+        if(server!=null&&server.isAlive()){
+            server.interrupt();
+        }
+//        unregisterReceiver(receiver);
         super.onPause();
     }
 
@@ -236,5 +245,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     @Override
     public void update(Observable o, Object arg) {
         getMainLayout();
+    }
+
+    @Override
+    public boolean handleMessage(Message msg) {
+        return false;
     }
 }

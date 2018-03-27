@@ -19,7 +19,6 @@
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
-            android:supportsRtl="true"
             android:theme="@style/AppTheme">
         <activity android:name=".ui.MainActivity">
             <intent-filter>
@@ -29,18 +28,18 @@
             </intent-filter>
         </activity>
 
-        <service
-                android:name=".network.PlayerService"
-                android:exported="false">
-            <intent-filter>
-                <category android:name="os.checkers.network.PlayerService"/>
-            </intent-filter>
-        </service>
-        <service
-                android:name=".network2.RemotePlayer"
-                android:enabled="true"
-                android:exported="false">
-        </service>
+        <!--<service-->
+                <!--android:name=".network.PlayerService"-->
+                <!--android:exported="false">-->
+            <!--<intent-filter>-->
+                <!--<category android:name="os.checkers.network.PlayerService"/>-->
+            <!--</intent-filter>-->
+        <!--</service>-->
+        <!--<service-->
+                <!--android:name=".network2.RemotePlayer"-->
+                <!--android:enabled="true"-->
+                <!--android:exported="false">-->
+        <!--</service>-->
     </application>
 
 </manifest>
