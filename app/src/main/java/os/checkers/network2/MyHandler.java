@@ -7,7 +7,7 @@ import android.util.Log;
 
 import java.io.Serializable;
 
-public class MyHandler{
+public class MyHandler implements Serializable{
     public static final String TAG = MyHandler.class.getName();
     private Handler mHandler;
 
@@ -18,24 +18,6 @@ public class MyHandler{
         mHandler.sendMessage(message);
     }
 
-    enum Type implements Serializable{
-        LOCAL_HOST,
-        LOCAL_PORT,
-        REMOTE_HOST,
-        REMOTE_PORT,
-        NO_PLAYER,
-        SENT,
-        UPDATE_POSITION;
-        static boolean contains(String action) {
-            for (Type a : values()) {
-                if (a.name().equals(action)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
     public Handler getHandler() {
         return mHandler;
     }
@@ -43,16 +25,6 @@ public class MyHandler{
     public MyHandler(Handler mHandler) {
         this.mHandler = mHandler;
     }
-
-//    public void sendMessage(String tag, String msg)
-//    {
-//        Log.d(tag, msg);
-//        Message message = mHandler.obtainMessage();
-//        Bundle bundle = message.getData();
-//        bundle.putString(tag, msg);
-//        message.setData(bundle);
-//        mHandler.sendMessage(message);
-//    }
 
     public void sendMessage(Type type)
     {
@@ -63,16 +35,6 @@ public class MyHandler{
         message.setData(bundle);
         mHandler.sendMessage(message);
     }
-
-//    public void sendMessage(String tag, String key, Parcelable obj){
-//        Log.d(tag, key + "=\n" + obj);
-//        Message message = mHandler.obtainMessage();
-//        Bundle bundle = message.getData();
-//        bundle.putParcelable(key, obj);
-//        message.setData(bundle);
-//        mHandler.sendMessage(message);
-//    }
-
     public void sendMessage(String  tag, Type key, Serializable seri){
         Log.d(tag, key + "=\n" + seri);
         Message message = mHandler.obtainMessage();

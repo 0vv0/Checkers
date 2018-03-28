@@ -10,31 +10,7 @@ import android.os.Messenger;
 public class RemotePlayer extends IntentService implements Handler.Callback {
     public static final String TAG = RemotePlayer.class.getName();
 
-    //    private static final String STARTING = "starting server";
-//    private static final String STARTED = "server has been started";
-//    public static final String EXTRA_NAME = TAG;
-//    public static final String EXTRA_REMOTE_HOST = "remote player host";
-//    public static final String EXTRA_REMOTE_PORT = "remote player port";
-//
-    enum Action {
-        GET_LOCALHOST,
-        SET_PLAYER,
-        FREE_PLAYER,
-        UPDATE_POSITION;
-
-        static boolean contains(String action) {
-            for (Action a : values()) {
-                if (a.name().equals(action)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-
-    //    private final Server server;
-    private final Handler server;
+    private volatile Server server;
 
     /**
      * Target we publish for clients to send messages to our service.
@@ -52,11 +28,7 @@ public class RemotePlayer extends IntentService implements Handler.Callback {
      */
     public RemotePlayer(String name) {
         super(name);
-        Handler mySelf = new Handler(this);
-        mMessenger = new Messenger(mySelf);
-        Server ser = new Server(mySelf);
-        ser.start();
-        server = new Handler(ser);
+        mMessenger = new Messenger(new Handler(this));
     }
 
 
@@ -75,46 +47,74 @@ public class RemotePlayer extends IntentService implements Handler.Callback {
         }
         if (intent.getAction() != null) {
             this.lastIntent = intent;
-        } else {
-            return;
-        }
-
-        if (Action.contains(lastIntent.getAction())) {
-            dispatcher(Action.valueOf(lastIntent.getAction()));
+            if (Action.contains(lastIntent.getAction())) {
+                dispatcher(Action.valueOf(lastIntent.getAction()));
+            }
         }
     }
 
     private void dispatcher(Action action) {
-//        switch (action) {
-//            case GET_LOCALHOST:
-//                getServer().getLocalHost();
-//                break;
-//            case SET_PLAYER:
-//                try {
-//                    InetAddress inetAddress = InetAddress.getByName (lastIntent.getStringExtra(EXTRA_REMOTE_HOST));
-//                    int port = lastIntent.getIntExtra(EXTRA_REMOTE_PORT, 0);
-////                    getServer().connect(inetAddress, port);
-//                } catch (Exception ex){
-//                    Log.d(TAG, "can't resolve remote host");
-//                }
-//                break;
-//            case FREE_PLAYER:
-//                getServer().restart();
-//                break;
-//            case UPDATE_POSITION:
-////                getServer().send(lastIntent.getStringExtra(EXTRA_NAME));
-//                break;
-//
-//        }
+        switch (action) {
+            case GET_LOCALHOST:
+                getServer().getLocalHost();
+                break;
+            case SET_PLAYER:
+                String inetAddress = lastIntent.getStringExtra(Type.REMOTE_HOST.name());
+                int port = lastIntent.getIntExtra(Type.REMOTE_PORT.name(), 0);
+                getServer().connectWith(inetAddress, port);
+                break;
+            case FREE_PLAYER:
+                getServer().freePlayer();
+                break;
+            case UPDATE_POSITION:
+                getServer().sendPosition(lastIntent.getStringExtra(Action.UPDATE_POSITION.name()));
+                break;
+        }
+    }
+
+    private void dispatchType(final Message msg){
+        Type type = Type.values()[msg.what];
+        switch (type){
+            case LOCAL_HOST:
+                sendIntent("", msg.getData().getString(Type.LOCAL_HOST.name()));
+                break;
+            case LOCAL_PORT:
+                break;
+            case REMOTE_HOST:
+                break;
+            case REMOTE_PORT:
+                break;
+            case NO_PLAYER:
+                break;
+            case SENT:
+                break;
+            case UPDATE_POSITION:
+
+                break;
+        }
+    }
+
+    private void sendIntent(String action, String msgString){
+        Intent intent = new Intent();
+        intent.addCategory(TAG);
+        intent.setAction(action);
+        intent.putExtra(TAG, msgString);
+        sendBroadcast(intent);
     }
 
     @Override
     public boolean handleMessage(Message msg) {
-
+        dispatchType(msg);
         return false;
     }
 
-    private Handler getServer() {
+    private synchronized Server getServer() {
+        if (server == null || !server.isAlive()) {
+            synchronized (this) {
+                server = new Server(new Handler(this));
+                server.start();
+            }
+        }
         return server;
     }
 

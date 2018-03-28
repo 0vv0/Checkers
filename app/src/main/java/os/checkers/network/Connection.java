@@ -141,7 +141,7 @@ public class Connection{
             @Override
             public void run() {
                 try {
-                    // Since discovery will happen via Nsd, we don't need to care which port is
+                    // Since discovery will happen via Nsd, we don't need to care which DEFAULT_PORT is
                     // used.  Just grab an available one  and advertise it via Nsd.
                     mServerSocket = new ServerSocket(0);
                     setLocalPort(mServerSocket.getLocalPort());
