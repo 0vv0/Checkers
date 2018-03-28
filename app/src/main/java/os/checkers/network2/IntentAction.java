@@ -1,18 +1,13 @@
 package os.checkers.network2;
 
-import java.io.Serializable;
-
-public enum Type implements Serializable {
-    LOCAL_HOST,
-    LOCAL_PORT,
-    REMOTE_HOST,
-    REMOTE_PORT,
-    NO_PLAYER,
-    SENT,
+enum IntentAction {
+    GET_LOCALHOST,
+    SET_PLAYER,
+    FREE_PLAYER,
     UPDATE_POSITION;
 
     static boolean contains(String action) {
-        for (Type a : values()) {
+        for (IntentAction a : values()) {
             if (a.name().equals(action)) {
                 return true;
             }

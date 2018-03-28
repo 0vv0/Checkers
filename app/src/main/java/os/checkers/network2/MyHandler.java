@@ -7,7 +7,7 @@ import android.util.Log;
 
 import java.io.Serializable;
 
-public class MyHandler implements Serializable{
+public class MyHandler implements Serializable {
     public static final String TAG = MyHandler.class.getName();
     private Handler mHandler;
 
@@ -26,34 +26,39 @@ public class MyHandler implements Serializable{
         this.mHandler = mHandler;
     }
 
-    public void sendMessage(Type type)
-    {
-        Log.d(TAG, type.name());
-        Message message = mHandler.obtainMessage();
-        Bundle bundle = message.getData();
-        bundle.putString(type.name(), "");
-        message.setData(bundle);
-        mHandler.sendMessage(message);
-    }
-    public void sendMessage(String  tag, Type key, Serializable seri){
-        Log.d(tag, key + "=\n" + seri);
-        Message message = mHandler.obtainMessage();
-
-        Bundle bundle = message.getData();
-        bundle.putString(tag, key.name());
-        bundle.putSerializable(key.name(), seri);
-        message.setData(bundle);
-        mHandler.sendMessage(message);
+    public void sendMessage(HandlerType type) {
+        sendMessage(type, "");
     }
 
-    public void sendMessage(Type key, Serializable seri){
-        Log.d(TAG, key + "=\n" + seri);
+    //    public void sendMessage(String  tag, HandlerType key, Serializable seri){
+//        Log.d(tag, key + "=\n" + seri);
+//        Message message = mHandler.obtainMessage();
+//
+//        Bundle bundle = message.getData();
+//        bundle.putString(tag, key.name());
+//        bundle.putSerializable(key.name(), seri);
+//        message.setData(bundle);
+//        mHandler.sendMessage(message);
+//    }
+    public void sendMessage(HandlerType key, String msg) {
+        Log.d(TAG, key + "=\n" + msg);
         Message message = mHandler.obtainMessage();
         Bundle bundle = message.getData();
-        bundle.putSerializable(key.name(), seri);
+        bundle.putString(key.name(), msg);
         message.setData(bundle);
         mHandler.sendMessage(message);
     }
+
+
+
+//    public void sendMessage(HandlerType key, Serializable seri){
+//        Log.d(TAG, key + "=\n" + seri);
+//        Message message = mHandler.obtainMessage();
+//        Bundle bundle = message.getData();
+//        bundle.putSerializable(key.name(), seri);
+//        message.setData(bundle);
+//        mHandler.sendMessage(message);
+//    }
 
 
 }

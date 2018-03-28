@@ -21,7 +21,11 @@ public class Server extends HandlerThread implements Handler.Callback {
     private Connection connection;
     private InetAddress remoteAddress;
     private int remotePort = 0;
-    private MyHandler inHandler;
+    private volatile MyHandler inHandler;
+
+    private synchronized MyHandler getInHandler(){
+        return inHandler;
+    }
 
     public Server(Handler handler) {
         super(TAG);
@@ -38,7 +42,7 @@ public class Server extends HandlerThread implements Handler.Callback {
 
     private void send(String msg) {
         if (remoteAddress == null || remotePort == 0) {
-            mHandler.sendMessage(Type.NO_PLAYER);
+            mHandler.sendMessage(HandlerType.NO_PLAYER, "");
             return;
         }
         connection.sendTo(remoteAddress, remotePort, msg);
@@ -49,9 +53,6 @@ public class Server extends HandlerThread implements Handler.Callback {
         try {
             mServerSocket = new ServerSocket(DEFAULT_PORT);
             Log.d(TAG, "Will listen on: " + mServerSocket.getInetAddress().getHostName() + ":" + mServerSocket.getLocalPort());
-
-//            mHandler.sendMessage(TAG, MyHandler.Type.LOCAL_PORT, mServerSocket.getLocalPort());
-//            mHandler.sendMessage(TAG, MyHandler.Type.LOCAL_HOST, mServerSocket.getInetAddress().getHostName());
 
             while (!Thread.currentThread().isInterrupted()) {
                 Log.d(TAG, "ServerSocket Created, awaiting connection");
@@ -90,8 +91,8 @@ public class Server extends HandlerThread implements Handler.Callback {
         Log.d(TAG, "Connect requested from: " + socket.getInetAddress());
         if(remotePort==0){
             Bundle bundle = new Bundle();
-            bundle.putString(Type.REMOTE_HOST.name(), socket.getInetAddress().getHostName());
-            bundle.putInt(Type.REMOTE_PORT.name(),socket.getPort());
+            bundle.putString(HandlerType.REMOTE_HOST.name(), socket.getInetAddress().getHostName());
+            bundle.putInt(HandlerType.REMOTE_PORT.name(),socket.getPort());
             mHandler.sendMessage(bundle);
         }
         if (socket.getInetAddress().equals(remoteAddress)) {
@@ -103,7 +104,7 @@ public class Server extends HandlerThread implements Handler.Callback {
     @Override
     public boolean handleMessage(Message msg) {
         Bundle bundle = msg.getData();
-        for (Type t : Type.values()) {
+        for (HandlerType t : HandlerType.values()) {
             if (bundle.containsKey(t.name())) {
                 dispatcher(t, bundle);
             }
@@ -127,28 +128,26 @@ public class Server extends HandlerThread implements Handler.Callback {
         }
     }
 
-    private void dispatcher(Type type, Bundle bundle) {
+    private void dispatcher(HandlerType type, Bundle bundle) {
         switch (type) {
             case LOCAL_HOST:
                 mHandler.sendMessage(type, mServerSocket.getInetAddress().getHostName());
                 break;
             case LOCAL_PORT:
-                mHandler.sendMessage(type, mServerSocket.getLocalPort());
+                mHandler.sendMessage(type, String.valueOf(mServerSocket.getLocalPort()));
                 break;
             case REMOTE_HOST:
-                setRemoteAddress(bundle.getString(Type.REMOTE_HOST.name(), null));
+                setRemoteAddress(bundle.getString(type.name(), null));
                 break;
             case REMOTE_PORT:
-                setRemotePort(bundle.getInt(Type.REMOTE_PORT.name(), 0));
+                setRemotePort(bundle.getInt(type.name(), 0));
                 break;
             case NO_PLAYER:
-                mHandler.sendMessage(Type.NO_PLAYER);
-                break;
             case SENT:
-                mHandler.sendMessage(Type.SENT, "");
+                mHandler.sendMessage(type, "");
                 break;
             case UPDATE_POSITION:
-                String s = bundle.getString(Type.UPDATE_POSITION.name(), "");
+                String s = bundle.getString(type.name(), "");
                 if (!s.isEmpty()) {
                     send(s);
                 }
@@ -156,16 +155,7 @@ public class Server extends HandlerThread implements Handler.Callback {
         }
     }
 
-    public void getLocalHost() {
-
-    }
-
-    public void freePlayer() {
-    }
-
-    public void sendPosition(String stringExtra) {
-    }
-
-    public void connectWith(String inetAddress, int port) {
-    }
+   public void addRequest(HandlerType type, String data){
+        getInHandler().sendMessage(type, data);
+   }
 }

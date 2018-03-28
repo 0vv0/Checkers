@@ -62,7 +62,7 @@ public class Connection{
                 }
                 input.close();
                 socket.close();
-                handler.sendMessage(Type.UPDATE_POSITION, msg);
+                handler.sendMessage(HandlerType.UPDATE_POSITION, msg);
             } catch (IOException e) {
                 Log.e(TAG, "loop error: ", e);
             }
@@ -91,7 +91,7 @@ public class Connection{
                 out.write(msg);
                 out.close();
                 socket.close();
-                handler.sendMessage(Type.SENT, msg);
+                handler.sendMessage(HandlerType.SENT, msg);
             } catch (IOException e) {
                 Log.e(TAG, "loop error: ", e);
             }
