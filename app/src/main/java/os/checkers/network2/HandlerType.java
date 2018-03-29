@@ -9,6 +9,7 @@ public enum HandlerType implements Serializable {
     REMOTE_PORT,
     NO_PLAYER,
     SENT,
+    ERROR,
     UPDATE_POSITION;
 
     static boolean contains(String action) {

@@ -6,16 +6,15 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.util.Log;
 
 public class RemotePlayer extends IntentService implements Handler.Callback {
     public static final String TAG = RemotePlayer.class.getName();
-
-    private volatile Server server;
-
     /**
      * Target we publish for clients to send messages to our service.
      */
     private final Messenger mMessenger;
+    private volatile Server server;
 
     public RemotePlayer() {
         this(TAG);
@@ -72,7 +71,7 @@ public class RemotePlayer extends IntentService implements Handler.Callback {
         }
     }
 
-    private void sendIntent(String action, String msgString){
+    private void sendIntent(String action, String msgString) {
         Intent intent = new Intent();
         intent.addCategory(TAG);
         intent.setAction(action);
@@ -80,13 +79,14 @@ public class RemotePlayer extends IntentService implements Handler.Callback {
         sendBroadcast(intent);
     }
 
-    private void sendIntent(HandlerType type, String msg){
+    private void sendIntent(HandlerType type, String msg) {
         sendIntent(type.name(), msg);
     }
 
     @Override
     public boolean handleMessage(Message msg) {
-        if(msg.what>=0&&msg.what<HandlerType.values().length){
+        Log.d(TAG, "What=" + msg.what + "\nData=" + msg.getData());
+        if (msg.what >= 0 && msg.what < HandlerType.values().length) {
             HandlerType type = HandlerType.values()[msg.what];
             sendIntent(type, msg.getData().getString(type.name()));
         }

@@ -16,11 +16,6 @@ public class Field extends Observable implements Serializable {
      * We are The Singleton
      */
     private static final Field ourInstance = new Field();
-
-    public static Field getInstance() {
-        return ourInstance;
-    }
-
     private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(Coordinate.class, new InterfaceAdapter<Coordinate>())
             .setExclusionStrategies(new ExclusionStrategy() {
@@ -39,19 +34,25 @@ public class Field extends Observable implements Serializable {
     private Square[][] field;
     private Color player;
 
-    public String getJson() {
-        return gson.toJson(this);
+    private Field() {
+        startNewGame();
+    }
+
+    public static Field getInstance() {
+        return ourInstance;
     }
 
     public static void fromJson(String serializedToString) {
         Field f = gson.fromJson(serializedToString, Field.class);
-        getInstance().field = f.field;
-        getInstance().player = f.player;
-        getInstance().notifyObservers();
+        if(!getInstance().equals(f)) {
+            getInstance().field = f.field;
+            getInstance().player = f.player;
+            getInstance().notifyObservers();
+        }
     }
 
-    private Field() {
-        startNewGame();
+    public String getJson() {
+        return gson.toJson(this);
     }
 
     private void startNewGame() {

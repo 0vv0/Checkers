@@ -1,22 +1,20 @@
 package os.checkers.ui;
 
 import android.app.Activity;
-import android.content.*;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import os.checkers.R;
 import os.checkers.model.Color;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
-import os.checkers.network.IntentActions;
-import os.checkers.network.PlayerService;
+import os.checkers.network2.HandlerType;
+import os.checkers.network2.MyHandler;
 import os.checkers.network2.Server;
 
 import java.util.ArrayList;
@@ -27,92 +25,55 @@ import java.util.Observer;
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer, Handler.Callback {
     private static final String TAG = MainActivity.class.getName();
 
-    private TextView mTextView;
-    private List<String> mPlayers = new ArrayList<>();
-    private Server server;
+    private TextView host;
+    private TextView port;
+    private EditText remoteHost;
+    private EditText remotePort;
+    private Button connect;
 
-    //    private Field field;
+    private Server server;
+    private MyHandler inHandler;
+
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player = Color.White;
-//    private BroadcastReceiver receiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-////            switch (IntentActions.valueOf(intent.getAction())) {
-////                case LIST_PLAYERS:
-////                    Toast
-////                            .makeText(getApplicationContext(), "Player list changed...", Toast.LENGTH_SHORT)
-////                            .show();
-////                    mTextView.setText(intent.getStringExtra(NsdService.PLAYERS));
-////                    break;
-////                case SET_POSITION:
-////                    Toast
-////                            .makeText(getApplicationContext(), "Position changed...", Toast.LENGTH_SHORT)
-////                            .show();
-////                    if (intent.getStringExtra(NsdService.POSITION) != null) {
-////                        mTextView.setText(intent.getStringExtra(NsdService.POSITION));
-////                        Field.fromJson(intent.getStringExtra(NsdService.POSITION));
-////                    }
-////                    break;
-////            }
-//            if (intent.hasCategory(PlayerService.TAG)) {
-//                if (intent.hasExtra(PlayerService.Action.ADD_PLAYER)) {
-//                    addPlayer(intent.getParcelableExtra(PlayerService.Action.ADD_PLAYER).toString());
-//                }
-//                if (intent.hasExtra(PlayerService.Action.REMOVE_PLAYER)) {
-//                    removePlayer(intent.getParcelableExtra(PlayerService.Action.REMOVE_PLAYER).toString());
-//                }
-//                update(mTextView, mPlayers);
-//            }
-//        }
-//    };
-
-    private void addPlayer(String player) {
-        mPlayers.add(player.intern());
-    }
-
-    private void removePlayer(String player) {
-        mPlayers.remove(player.intern());
-    }
-
-    private void update(final TextView view, List<String> players) {
-        StringBuilder p = new StringBuilder();
-        for (String player : players) {
-            p.append(player);
-        }
-        view.setText(p);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mTextView = (TextView) findViewById(R.id.info);
+
+        host = (TextView) findViewById(R.id.host);
+        port = (TextView) findViewById(R.id.port);
+        remoteHost = (EditText) findViewById(R.id.remotehost);
+        remotePort = (EditText) findViewById(R.id.remoteport);
+
+        connect = (Button) findViewById(R.id.connect);
         Log.d(TAG, Thread.currentThread().getName());
+        inHandler = new MyHandler(new Handler(this));
+        server = new Server(inHandler);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(server==null||!server.isAlive()){
-            server = new Server(new Handler(this));
+        if (!server.isAlive()) {
             server.start();
         }
-//        IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addCategory(PlayerService.TAG);
-//        registerReceiver(receiver, intentFilter);
-
         Field.getInstance().addObserver(this);
+
         load(null);
     }
 
     @Override
     protected void onPause() {
         save(null);
-        Field.getInstance().deleteObserver(this);
-        if(server!=null&&server.isAlive()){
+
+        if (server.isAlive()) {
             server.interrupt();
         }
-//        unregisterReceiver(receiver);
+
+        Field.getInstance().deleteObserver(this);
+
         super.onPause();
     }
 
@@ -174,7 +135,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
     public void exit(View view) {
         save(null);
-        connect(view);
+//        connect(view);
         System.exit(0);
     }
 
@@ -214,41 +175,72 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             selectedSquare.clear();
             Field.getInstance().move(coordinates);
 
-            Intent intent = new Intent(IntentActions.SEND);
-            intent.setPackage(this.getPackageName());
             Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, intent.getAction());
-            this.startService(intent);
+            if(connect.isPressed()) {
+                server.addRequest(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+            }
         }
     }
 
-    public void list(View v) {
-        Toast.makeText(this, "searching for players...", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "searching...");
-        startService(PlayerService.Action.LIST, PlayerService.TAG, PlayerService.class);
-    }
-
     public void connect(View v) {
-        Toast.makeText(this, "stopping search ...", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "stopping search...");
-        mPlayers.clear();
-        startService(PlayerService.Action.STOP, PlayerService.TAG, PlayerService.class);
-    }
-
-    private void startService(String action, String category, Class clazz) {
-        Intent intent = new Intent(this, clazz);
-        intent.setAction(action);
-        intent.addCategory(category);
-        startService(intent);
+        if (v.isPressed()) {
+            server.interrupt();
+        } else {
+            if(remoteHost.getText().toString().isEmpty()||remotePort.getText().toString().isEmpty()){
+                Toast.makeText(this, "HOST or PORT not set", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if(!server.isAlive()){server.start();}
+            server.addRequest(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+        }
+        v.setPressed(!v.isPressed());
     }
 
     @Override
     public void update(Observable o, Object arg) {
         getMainLayout();
+
     }
 
     @Override
     public boolean handleMessage(Message msg) {
+        if (msg.what < 0 || msg.what > HandlerType.values().length - 1) {
+            return false;
+        }
+        HandlerType type = HandlerType.values()[msg.what];
+        String data = msg.getData().getString(type.name());
+
+        switch (type) {
+            case LOCAL_HOST:
+                host.setText(data);
+                break;
+            case LOCAL_PORT:
+                port.setText(data);
+                break;
+            case REMOTE_HOST:
+                if(!remoteHost.isActivated()){
+                    remoteHost.setText(data);
+                }
+                break;
+            case REMOTE_PORT:
+                if(!remotePort.isActivated()){
+                    remotePort.setText(data);
+                }
+                break;
+            case NO_PLAYER:
+                connect.setPressed(false);
+                break;
+            case SENT:
+                Toast.makeText(this, "Position has been sent", Toast.LENGTH_LONG).show();
+                break;
+            case ERROR:
+                Toast.makeText(this, data, Toast.LENGTH_LONG).show();
+                break;
+            case UPDATE_POSITION:
+                Field.fromJson(data);
+                break;
+        }
+
         return false;
     }
 }

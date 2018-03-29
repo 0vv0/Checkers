@@ -11,12 +11,13 @@ public class MyHandler implements Serializable {
     public static final String TAG = MyHandler.class.getName();
     private Handler mHandler;
 
-    public void sendMessage(Bundle bundle) {
-        Log.d(TAG, bundle.toString());
-        Message message = mHandler.obtainMessage();
-        message.setData(bundle);
-        mHandler.sendMessage(message);
-    }
+//    public void sendMessage(Bundle bundle) {
+//        Log.d(TAG, bundle.toString());
+//        Message message = mHandler.obtainMessage();
+//        message.setData(bundle);
+//        message.what = HandlerType.values().length;
+//        mHandler.sendMessage(message);
+//    }
 
     public Handler getHandler() {
         return mHandler;
@@ -30,22 +31,13 @@ public class MyHandler implements Serializable {
         sendMessage(type, "");
     }
 
-    //    public void sendMessage(String  tag, HandlerType key, Serializable seri){
-//        Log.d(tag, key + "=\n" + seri);
-//        Message message = mHandler.obtainMessage();
-//
-//        Bundle bundle = message.getData();
-//        bundle.putString(tag, key.name());
-//        bundle.putSerializable(key.name(), seri);
-//        message.setData(bundle);
-//        mHandler.sendMessage(message);
-//    }
     public void sendMessage(HandlerType key, String msg) {
         Log.d(TAG, key + "=\n" + msg);
         Message message = mHandler.obtainMessage();
         Bundle bundle = message.getData();
         bundle.putString(key.name(), msg);
         message.setData(bundle);
+        message.what = key.ordinal();
         mHandler.sendMessage(message);
     }
 

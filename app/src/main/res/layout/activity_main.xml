@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-        android:layout_height="match_parent"
         xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:orientation="vertical">
     <LinearLayout android:layout_width="match_parent"
@@ -10,74 +10,81 @@
                   android:orientation="vertical">
 
     </LinearLayout>
-    <TextView android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:id="@+id/info"/>
-    <Button android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Stop"
-            android:id="@+id/connect"
-            android:onClick="connect"
-    />
+
+
     <Button android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Make a move"
             android:id="@+id/move"
             android:onClick="move"
     />
+
+
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="false">
-
-        <!--<LinearLayout-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_weight="1"-->
-        <!--android:orientation="vertical">-->
-        <!--<Button-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/save"-->
-        <!--android:text="Save game"-->
-        <!--android:onClick="save"/>-->
-        <!--<Button-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/load"-->
-        <!--android:text="Load game"-->
-        <!--android:onClick="load"/>-->
-        <!--<Button-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/clear"-->
-        <!--android:text="Clear save"-->
-        <!--android:onClick="clearSave"/>-->
-        <!--</LinearLayout>-->
+            android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal">
+            <TextView android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:id="@+id/host"/>
+            <TextView android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:id="@+id/port"/>
+        </LinearLayout>
         <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1">
-            <Button
-                    android:layout_width="match_parent"
+                android:orientation="horizontal">
+            <EditText
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/list"
-                    android:text="Find players"
-                    android:onClick="list"/>
+                    android:layout_weight="11"
+                    android:minHeight="2dp"
+                    android:minWidth="8dp"
+                    android:id="@+id/remotehost"/>
+            <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="2dp"
+                    android:minWidth="2dp"
+                    android:id="@+id/remoteport"/>
+            <Button android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Connect"
+                    android:id="@+id/connect"
+                    android:onClick="connect"
+            />
+        </LinearLayout>
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
             <Button
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:id="@+id/restart"
-                    android:text="Restart game"
+                    android:text="Restart"
                     android:onClick="restart"/>
+
             <Button
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:id="@+id/exit"
-                    android:text="Exit game"
+                    android:text="Exit"
                     android:onClick="exit"/>
         </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>

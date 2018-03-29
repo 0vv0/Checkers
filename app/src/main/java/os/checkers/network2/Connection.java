@@ -3,51 +3,35 @@ package os.checkers.network2;
 import android.util.Log;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
 
-public class Connection{
-    public static final String TAG = Connection.class.getName();
-    private final MyHandler mHandler;
+class Connection {
+    static final String TAG = Connection.class.getName();
+    private final MyHandler outHandler;
 
-    public Connection(MyHandler handler) {
+    Connection(MyHandler handler) {
         assert handler != null;
-        this.mHandler = handler;
+        this.outHandler = handler;
     }
 
-    public void receiveFrom(Socket socket){
-        new Thread(new ReceivingThread(mHandler, socket)).start();
+    void receiveFrom(Socket socket) {
+        new Thread(new ReceivingThread(outHandler, socket)).start();
     }
 
-    public void sendTo(Socket socket, String msg){
-        new Thread(new SendingThread(mHandler, socket, msg)).start();
+    void sendTo(Socket socket, String msg) {
+        new Thread(new SendingThread(outHandler, socket, msg)).start();
     }
 
-//    private static synchronized void sendMessage(Handler handler, String message) {
-//        Log.d(TAG, "Try to send message:\n" + message);
-//        new MyHandler(handler).sendMessage(TAG, message);
-//    }
-
-    public void sendTo(InetAddress remoteAddress, int remotePort, String msg) {
-        try {
-            Socket socket = new Socket(remoteAddress, remotePort);
-            sendTo(socket, msg);
-        } catch (IOException e) {
-            Log.d(TAG, "Can't create Socket to " + remoteAddress.getHostAddress() + ":" + remotePort + "\n" + e.getMessage());
-        }
-
-    }
-
-    public static class ReceivingThread implements Runnable {
+    static class ReceivingThread implements Runnable {
         public final static String TAG = ReceivingThread.class.getName();
         private Socket socket;
-        private MyHandler handler;
+        private MyHandler outHandler;
 
         ReceivingThread(MyHandler handler, Socket socket) {
-            assert socket!=null;
+            assert socket != null;
             this.socket = socket;
-            assert handler!=null;
-            this.handler = handler;
+            assert handler != null;
+            this.outHandler = handler;
         }
 
         @Override
@@ -55,45 +39,61 @@ public class Connection{
             try {
                 BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 StringBuilder msg = new StringBuilder();
-                String line = input.readLine();
-                while (line!=null) {
-                    msg.append(line);
-                    line = input.readLine();
+                String buffer;
+                while ((buffer = input.readLine()) != null) {
+                    msg.append(buffer);
                 }
                 input.close();
-                socket.close();
-                handler.sendMessage(HandlerType.UPDATE_POSITION, msg);
+                outHandler.sendMessage(HandlerType.UPDATE_POSITION, msg.toString());
             } catch (IOException e) {
-                Log.e(TAG, "loop error: ", e);
+                Log.e(TAG, e.getMessage());
+                outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
+            }
+
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+                outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
             }
         }
     }
 
-    public static class SendingThread implements Runnable{
+    static class SendingThread implements Runnable {
         public final static String TAG = SendingThread.class.getName();
         private Socket socket;
-        private MyHandler handler;
+        private MyHandler outHandler;
         private String msg;
 
-        SendingThread(MyHandler handler, Socket socket, String msg) {
-            assert msg!=null;
+        SendingThread(MyHandler outHandler, Socket socket, String msg) {
+            assert msg != null;
             this.msg = msg;
-            assert socket!=null;
+            assert socket != null;
             this.socket = socket;
-            assert handler!=null;
-            this.handler =handler;
+            assert outHandler != null;
+            this.outHandler = outHandler;
         }
 
         @Override
         public void run() {
+            assert socket!=null;
+            BufferedWriter out = null;
             try {
-                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                 out.write(msg);
-                out.close();
-                socket.close();
-                handler.sendMessage(HandlerType.SENT, msg);
+                outHandler.sendMessage(HandlerType.SENT, msg);
             } catch (IOException e) {
-                Log.e(TAG, "loop error: ", e);
+                Log.e(TAG, "send position error: " + e.getMessage());
+                outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
+            }
+            try {
+                if (out != null) {
+                    out.close();
+                }
+                socket.close();
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+                outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
             }
         }
     }
