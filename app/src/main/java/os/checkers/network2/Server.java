@@ -39,14 +39,8 @@ public class Server extends HandlerThread implements Handler.Callback {
         connection = new Connection(outHandler);
     }
 
-    private synchronized MyHandler getInHandler() {
+    public synchronized MyHandler getInHandler() {
         return inHandler;
-    }
-
-    @Override
-    protected void onLooperPrepared() {
-        super.onLooperPrepared();
-        inHandler = new MyHandler(new Handler(getLooper(), this));
     }
 
     private void send(String msg) {
@@ -60,6 +54,12 @@ public class Server extends HandlerThread implements Handler.Callback {
             Log.e(TAG, e.getMessage());
             outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
         }
+    }
+
+    @Override
+    protected void onLooperPrepared() {
+        super.onLooperPrepared();
+        inHandler = new MyHandler(new Handler(this));
     }
 
     @Override
@@ -166,7 +166,4 @@ public class Server extends HandlerThread implements Handler.Callback {
         }
     }
 
-    public void addRequest(HandlerType type, String data) {
-        getInHandler().sendMessage(type, data);
-    }
 }

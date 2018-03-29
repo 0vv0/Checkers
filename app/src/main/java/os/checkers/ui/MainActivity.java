@@ -32,7 +32,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private Button connect;
 
     private Server server;
-    private MyHandler inHandler;
+    private volatile MyHandler outHandler;
 
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player = Color.White;
@@ -49,8 +49,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
         connect = (Button) findViewById(R.id.connect);
         Log.d(TAG, Thread.currentThread().getName());
-        inHandler = new MyHandler(new Handler(this));
-        server = new Server(inHandler);
+        server = new Server(new MyHandler(new Handler(this)));
     }
 
     @Override
@@ -70,6 +69,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
         if (server.isAlive()) {
             server.interrupt();
+            connect.setSelected(false);
+            outHandler = null;
         }
 
         Field.getInstance().deleteObserver(this);
@@ -176,24 +177,41 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             Field.getInstance().move(coordinates);
 
             Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
-            if(connect.isPressed()) {
-                server.addRequest(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+            if (connect.isSelected()) {
+                getOutHandler().sendMessage(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
             }
         }
     }
 
+    private synchronized MyHandler getOutHandler(){
+        if(outHandler==null){
+            synchronized (this) {
+                setOutHandler(server);
+            }
+        }
+        return outHandler;
+    }
+
+    private synchronized void setOutHandler(Server server){
+        outHandler = new MyHandler(new Handler(server.getLooper()));
+    }
+
     public void connect(View v) {
-        if (v.isPressed()) {
+        if (v.isSelected()) {
             server.interrupt();
+            outHandler = null;
         } else {
-            if(remoteHost.getText().toString().isEmpty()||remotePort.getText().toString().isEmpty()){
+            if (remoteHost.getText().toString().isEmpty() || remotePort.getText().toString().isEmpty()) {
                 Toast.makeText(this, "HOST or PORT not set", Toast.LENGTH_LONG).show();
                 return;
             }
-            if(!server.isAlive()){server.start();}
-            server.addRequest(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+            if (!server.isAlive()) {
+                server.start();
+            }
+
+            getOutHandler().sendMessage(HandlerType.LOCAL_HOST);
         }
-        v.setPressed(!v.isPressed());
+        v.setSelected(!v.isSelected());
     }
 
     @Override
@@ -218,17 +236,17 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                 port.setText(data);
                 break;
             case REMOTE_HOST:
-                if(!remoteHost.isActivated()){
+                if (!remoteHost.isActivated()) {
                     remoteHost.setText(data);
                 }
                 break;
             case REMOTE_PORT:
-                if(!remotePort.isActivated()){
+                if (!remotePort.isActivated()) {
                     remotePort.setText(data);
                 }
                 break;
             case NO_PLAYER:
-                connect.setPressed(false);
+                connect.setSelected(false);
                 break;
             case SENT:
                 Toast.makeText(this, "Position has been sent", Toast.LENGTH_LONG).show();

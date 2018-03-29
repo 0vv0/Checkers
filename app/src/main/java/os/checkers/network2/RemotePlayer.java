@@ -53,20 +53,20 @@ public class RemotePlayer extends IntentService implements Handler.Callback {
         IntentAction action = IntentAction.valueOf(intent.getAction());
         switch (action) {
             case GET_LOCALHOST:
-                getServer().addRequest(HandlerType.LOCAL_HOST, "");
-                getServer().addRequest(HandlerType.LOCAL_PORT, "");
+                getServer().getInHandler().sendMessage(HandlerType.LOCAL_HOST, "");
+                getServer().getInHandler().sendMessage(HandlerType.LOCAL_PORT, "");
                 break;
             case SET_PLAYER:
                 String inetAddress = intent.getStringExtra(HandlerType.REMOTE_HOST.name());
-                getServer().addRequest(HandlerType.REMOTE_HOST, inetAddress);
+                getServer().getInHandler().sendMessage(HandlerType.REMOTE_HOST, inetAddress);
                 int port = intent.getIntExtra(HandlerType.REMOTE_PORT.name(), 0);
-                getServer().addRequest(HandlerType.REMOTE_PORT, String.valueOf(port));
+                getServer().getInHandler().sendMessage(HandlerType.REMOTE_PORT, String.valueOf(port));
                 break;
             case FREE_PLAYER:
                 getServer().interrupt();
                 break;
             case UPDATE_POSITION:
-                getServer().addRequest(HandlerType.UPDATE_POSITION, intent.getStringExtra(IntentAction.UPDATE_POSITION.name()));
+                getServer().getInHandler().sendMessage(HandlerType.UPDATE_POSITION, intent.getStringExtra(IntentAction.UPDATE_POSITION.name()));
                 break;
         }
     }
