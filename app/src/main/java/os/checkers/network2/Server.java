@@ -7,44 +7,31 @@ import android.os.Message;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
+import java.util.Enumeration;
 
 public class Server extends HandlerThread implements Handler.Callback {
     public static final String TAG = Server.class.getName();
     public static final int DEFAULT_PORT = 0;
 
-    private ServerSocket mServerSocket;
+    private volatile ServerSocket mServerSocket;
     private Connection connection;
 
     private InetAddress remoteAddress;
     private volatile int remotePort = DEFAULT_PORT;
 
     private MyHandler outHandler;
-    private volatile MyHandler inHandler;
-
-    public Server(Handler handler) {
-        super(TAG);
-        assert handler != null;
-        this.outHandler = new MyHandler(handler);
-        connection = new Connection(outHandler);
-    }
 
     public Server(MyHandler handler) {
         super(TAG);
         assert handler != null;
         this.outHandler = handler;
         connection = new Connection(outHandler);
-    }
-
-    public synchronized MyHandler getInHandler() {
-        return inHandler;
+        Log.d(TAG, Thread.currentThread().getName() + " has been started");
     }
 
     private void send(String msg) {
-        if (remotePort == DEFAULT_PORT||remoteAddress == null) {
+        if (remotePort == DEFAULT_PORT || remoteAddress == null) {
             outHandler.sendMessage(HandlerType.NO_PLAYER);
             return;
         }
@@ -59,14 +46,17 @@ public class Server extends HandlerThread implements Handler.Callback {
     @Override
     protected void onLooperPrepared() {
         super.onLooperPrepared();
-        inHandler = new MyHandler(new Handler(this));
+//        Log.d(TAG, "looper is " + getLooper());
+        loopCode();
     }
 
-    @Override
-    public void run() {
+    private void loopCode() {
+        Log.d(TAG, Thread.currentThread().getName() + " has been started");
         try {
-            mServerSocket = new ServerSocket(DEFAULT_PORT);
+            mServerSocket = new ServerSocket(DEFAULT_PORT, 1, getLocalAddress());
             Log.d(TAG, "Will listen on: " + mServerSocket.getInetAddress().getHostName() + ":" + mServerSocket.getLocalPort());
+            outHandler.sendMessage(HandlerType.LOCAL_HOST, mServerSocket.getInetAddress().getHostName());
+            outHandler.sendMessage(HandlerType.LOCAL_PORT, String.valueOf(mServerSocket.getLocalPort()));
 
             while (!Thread.currentThread().isInterrupted()) {
                 Log.d(TAG, "ServerSocket Created, awaiting connection");
@@ -74,20 +64,21 @@ public class Server extends HandlerThread implements Handler.Callback {
                 connectRequestedFrom(socket);
             }
         } catch (IOException e) {
-            Log.d(TAG, "Error creating ServerSocket");
+            if (!this.isInterrupted()) {
+                Log.d(TAG, "Error creating ServerSocket");
+            }
         }
-
     }
 
     @Override
     public void interrupt() {
         Log.d(TAG, "Thread interrupted");
-        tearDown();
         super.interrupt();
+        tearDown();
     }
 
     private void tearDown() {
-        Log.d(TAG, "Try to clean used resources...");
+        Log.d(TAG, "tearDown(): Try to clean used resources...");
         if (mServerSocket != null) {
             try {
                 mServerSocket.close();
@@ -140,7 +131,8 @@ public class Server extends HandlerThread implements Handler.Callback {
     private void dispatcher(HandlerType type, Bundle bundle) {
         switch (type) {
             case LOCAL_HOST:
-                outHandler.sendMessage(type, mServerSocket.getInetAddress().getHostName());
+                Log.d(TAG, "local host requested");
+                outHandler.sendMessage(type, mServerSocket.getInetAddress().getHostAddress());
                 break;
             case LOCAL_PORT:
                 outHandler.sendMessage(type, String.valueOf(mServerSocket.getLocalPort()));
@@ -164,6 +156,24 @@ public class Server extends HandlerThread implements Handler.Callback {
                 break;
 
         }
+    }
+
+    public static InetAddress getLocalAddress() {
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        Log.d(TAG, "" + inetAddress);
+                        return inetAddress;
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e(TAG, ex.toString());
+        }
+        return null;
     }
 
 }

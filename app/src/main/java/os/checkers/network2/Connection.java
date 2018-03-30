@@ -12,6 +12,7 @@ class Connection {
     Connection(MyHandler handler) {
         assert handler != null;
         this.outHandler = handler;
+        Log.d(TAG, Thread.currentThread().getName() + " has been started");
     }
 
     void receiveFrom(Socket socket) {
@@ -36,6 +37,7 @@ class Connection {
 
         @Override
         public void run() {
+            Log.d(TAG, Thread.currentThread().getName() + " has been started");
             try {
                 BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 StringBuilder msg = new StringBuilder();
@@ -76,6 +78,7 @@ class Connection {
 
         @Override
         public void run() {
+            Log.d(TAG, Thread.currentThread().getName() + " has been started");
             assert socket!=null;
             BufferedWriter out = null;
             try {

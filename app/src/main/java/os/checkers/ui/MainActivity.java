@@ -2,6 +2,8 @@ package os.checkers.ui;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -17,6 +19,7 @@ import os.checkers.network2.HandlerType;
 import os.checkers.network2.MyHandler;
 import os.checkers.network2.Server;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -32,7 +35,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private Button connect;
 
     private Server server;
-    private volatile MyHandler outHandler;
+    private MyHandler outHandler;
 
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player = Color.White;
@@ -46,19 +49,23 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         port = (TextView) findViewById(R.id.port);
         remoteHost = (EditText) findViewById(R.id.remotehost);
         remotePort = (EditText) findViewById(R.id.remoteport);
-
         connect = (Button) findViewById(R.id.connect);
-        Log.d(TAG, Thread.currentThread().getName());
-        server = new Server(new MyHandler(new Handler(this)));
+        Log.d(TAG, Thread.currentThread().getName() + " has been started");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (!server.isAlive()) {
-            server.start();
-        }
         Field.getInstance().addObserver(this);
+        MyHandler localHandler = new MyHandler(this);
+        Log.d(TAG, "localHandler.looper is " + localHandler.getLooper());
+
+        server = new Server(localHandler);
+        server.setPriority(Thread.MIN_PRIORITY);
+        server.start();
+
+        outHandler = new MyHandler(server.getLooper(), server);
+        Log.d(TAG, "outHandler.looper is " + outHandler.getLooper());
 
         load(null);
     }
@@ -67,11 +74,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     protected void onPause() {
         save(null);
 
-        if (server.isAlive()) {
-            server.interrupt();
-            connect.setSelected(false);
-            outHandler = null;
-        }
+        server.interrupt();
+        outHandler.getLooper().quit();
+        outHandler = null;
+        server = null;
 
         Field.getInstance().deleteObserver(this);
 
@@ -178,46 +184,31 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
             Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
             if (connect.isSelected()) {
-                getOutHandler().sendMessage(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+                outHandler.sendMessage(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
             }
         }
-    }
-
-    private synchronized MyHandler getOutHandler(){
-        if(outHandler==null){
-            synchronized (this) {
-                setOutHandler(server);
-            }
-        }
-        return outHandler;
-    }
-
-    private synchronized void setOutHandler(Server server){
-        outHandler = new MyHandler(new Handler(server.getLooper()));
     }
 
     public void connect(View v) {
         if (v.isSelected()) {
-            server.interrupt();
-            outHandler = null;
+            outHandler.sendMessage(HandlerType.NO_PLAYER);
         } else {
             if (remoteHost.getText().toString().isEmpty() || remotePort.getText().toString().isEmpty()) {
                 Toast.makeText(this, "HOST or PORT not set", Toast.LENGTH_LONG).show();
                 return;
             }
-            if (!server.isAlive()) {
-                server.start();
-            }
 
-            getOutHandler().sendMessage(HandlerType.LOCAL_HOST);
+            outHandler.sendMessage(HandlerType.REMOTE_HOST, remoteHost.getText().toString());
+            outHandler.sendMessage(HandlerType.REMOTE_PORT, remotePort.getText().toString());
+            outHandler.sendMessage(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
         }
         v.setSelected(!v.isSelected());
     }
 
+
     @Override
     public void update(Observable o, Object arg) {
         getMainLayout();
-
     }
 
     @Override
@@ -261,4 +252,42 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
         return false;
     }
+
+    public void local(View v) {
+        Log.d(TAG, "request localhost data");
+
+//        try {
+//            Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+//            while (nets.hasMoreElements()) {
+//                NetworkInterface intf = nets.nextElement();
+//                Log.d(TAG, "" + intf);
+//                Enumeration<InetAddress> ips = intf.getInetAddresses();
+//                String hostsList = host.getText().toString();
+//                while (ips.hasMoreElements()) {
+//                    InetAddress inetAddress = ips.nextElement();
+//                    Log.d(TAG, "" + inetAddress);
+//                    hostsList+= inetAddress.getAddress();
+//                }
+//                host.setText(hostsList);
+//            }
+//        } catch (SocketException e) {
+//            Log.d(TAG, e.getMessage());
+//        }
+
+        Log.d(TAG, "" +outHandler.getLooper());
+        outHandler.sendMessage(HandlerType.LOCAL_HOST);
+        outHandler.sendMessage(HandlerType.LOCAL_PORT);
+
+        getLocalWIFIAddress();
+    }
+
+    public void getLocalWIFIAddress(){
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        int ipAddress = wifiInfo.getIpAddress();
+        Log.d(TAG, "" + wifiInfo);
+        InetAddress inetAddress = null;
+
+    }
+
 }

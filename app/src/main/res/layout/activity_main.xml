@@ -11,15 +11,12 @@
 
     </LinearLayout>
 
-
     <Button android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Make a move"
             android:id="@+id/move"
             android:onClick="move"
     />
-
-
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -28,13 +25,20 @@
                       android:layout_height="wrap_content"
                       android:orientation="horizontal">
             <TextView android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_weight="1"
+                      android:layout_height="match_parent"
+                      android:layout_weight="11"
                       android:id="@+id/host"/>
             <TextView android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
+                      android:layout_height="match_parent"
+                      android:minWidth="2dp"
                       android:layout_weight="1"
                       android:id="@+id/port"/>
+            <Button android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="5"
+                    android:text="My data"
+                    android:id="@+id/local"
+                    android:onClick="local"/>
         </LinearLayout>
         <LinearLayout
                 android:layout_width="match_parent"
@@ -42,49 +46,45 @@
                 android:orientation="horizontal">
             <EditText
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="11"
-                    android:minHeight="2dp"
-                    android:minWidth="8dp"
-                    android:id="@+id/remotehost"/>
+                    android:id="@+id/remotehost" />
+
             <EditText
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:minHeight="2dp"
                     android:minWidth="2dp"
                     android:id="@+id/remoteport"/>
             <Button android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_height="match_parent"
+                    android:layout_weight="5"
                     android:text="Connect"
                     android:id="@+id/connect"
-                    android:onClick="connect"
-            />
-        </LinearLayout>
-
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-            <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:id="@+id/restart"
-                    android:text="Restart"
-                    android:onClick="restart"/>
-
-            <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:id="@+id/exit"
-                    android:text="Exit"
-                    android:onClick="exit"/>
+                    android:onClick="connect"/>
         </LinearLayout>
 
     </LinearLayout>
 
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/restart"
+                android:text="Restart"
+                android:onClick="restart"/>
+
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/exit"
+                android:text="Exit"
+                android:onClick="exit"/>
+    </LinearLayout>
 </LinearLayout>
