@@ -32,11 +32,11 @@ public class MyHandler extends Handler implements Serializable {
         sendMessage(type, "");
     }
 
-    public void sendMessage(HandlerType key, String msg) {
-        Log.d(TAG, key + "=\n" + msg);
+    public void sendMessage(HandlerType key, Serializable data){
+        Log.d(TAG, key + "=\n" + data);
         Message message = this.obtainMessage();
         Bundle bundle = message.getData();
-        bundle.putString(key.name(), msg);
+        bundle.putSerializable(key.name(), data);
         message.setData(bundle);
         message.what = key.ordinal();
         this.sendMessage(message);

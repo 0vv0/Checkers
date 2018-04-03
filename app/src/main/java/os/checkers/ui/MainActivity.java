@@ -17,8 +17,10 @@ import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
 import os.checkers.network2.HandlerType;
 import os.checkers.network2.MyHandler;
+import os.checkers.network2.Player;
 import os.checkers.network2.Server;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     private Button connect;
 
     private Server server;
-    private MyHandler outHandler;
 
     private List<ViewWithChecker> selectedSquare = new ArrayList<>();
     private Color player = Color.White;
@@ -60,13 +61,6 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         MyHandler localHandler = new MyHandler(this);
         Log.d(TAG, "localHandler.looper is " + localHandler.getLooper());
 
-        server = new Server(localHandler);
-        server.setPriority(Thread.MIN_PRIORITY);
-        server.start();
-
-        outHandler = new MyHandler(server.getLooper(), server);
-        Log.d(TAG, "outHandler.looper is " + outHandler.getLooper());
-
         load(null);
     }
 
@@ -74,10 +68,13 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     protected void onPause() {
         save(null);
 
-        server.interrupt();
-        outHandler.getLooper().quit();
-        outHandler = null;
-        server = null;
+        if (server != null) {
+            if (server.isAlive()) {
+                server.interrupt();
+            }
+            server = null;
+        }
+        connect.setSelected(false);
 
         Field.getInstance().deleteObserver(this);
 
@@ -184,27 +181,31 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
 
             Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
             if (connect.isSelected()) {
-                outHandler.sendMessage(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+
             }
         }
     }
 
+
     public void connect(View v) {
         if (v.isSelected()) {
-            outHandler.sendMessage(HandlerType.NO_PLAYER);
+            server.interrupt();
+            server = null;
+            v.setSelected(false);
+
         } else {
             if (remoteHost.getText().toString().isEmpty() || remotePort.getText().toString().isEmpty()) {
                 Toast.makeText(this, "HOST or PORT not set", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            outHandler.sendMessage(HandlerType.REMOTE_HOST, remoteHost.getText().toString());
-            outHandler.sendMessage(HandlerType.REMOTE_PORT, remotePort.getText().toString());
-            outHandler.sendMessage(HandlerType.UPDATE_POSITION, Field.getInstance().getJson());
+            v.setSelected(true);
         }
-        v.setSelected(!v.isSelected());
     }
 
+    void sendPosition() {
+
+    }
 
     @Override
     public void update(Observable o, Object arg) {
@@ -217,24 +218,12 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             return false;
         }
         HandlerType type = HandlerType.values()[msg.what];
-        String data = msg.getData().getString(type.name());
+        Serializable data = msg.getData().getSerializable(type.name());
 
         switch (type) {
-            case LOCAL_HOST:
-                host.setText(data);
-                break;
-            case LOCAL_PORT:
-                port.setText(data);
-                break;
-            case REMOTE_HOST:
-                if (!remoteHost.isActivated()) {
-                    remoteHost.setText(data);
-                }
-                break;
-            case REMOTE_PORT:
-                if (!remotePort.isActivated()) {
-                    remotePort.setText(data);
-                }
+            case LOCAL_PLAYER:
+                host.setText(((Player)data).getHostName());
+                port.setText(((Player)data).getHostPort());
                 break;
             case NO_PLAYER:
                 connect.setSelected(false);
@@ -243,10 +232,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                 Toast.makeText(this, "Position has been sent", Toast.LENGTH_LONG).show();
                 break;
             case ERROR:
-                Toast.makeText(this, data, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, (String)data, Toast.LENGTH_LONG).show();
                 break;
             case UPDATE_POSITION:
-                Field.fromJson(data);
+                Field.fromJson((String)data);
                 break;
         }
 
@@ -256,32 +245,10 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
     public void local(View v) {
         Log.d(TAG, "request localhost data");
 
-//        try {
-//            Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-//            while (nets.hasMoreElements()) {
-//                NetworkInterface intf = nets.nextElement();
-//                Log.d(TAG, "" + intf);
-//                Enumeration<InetAddress> ips = intf.getInetAddresses();
-//                String hostsList = host.getText().toString();
-//                while (ips.hasMoreElements()) {
-//                    InetAddress inetAddress = ips.nextElement();
-//                    Log.d(TAG, "" + inetAddress);
-//                    hostsList+= inetAddress.getAddress();
-//                }
-//                host.setText(hostsList);
-//            }
-//        } catch (SocketException e) {
-//            Log.d(TAG, e.getMessage());
-//        }
-
-        Log.d(TAG, "" +outHandler.getLooper());
-        outHandler.sendMessage(HandlerType.LOCAL_HOST);
-        outHandler.sendMessage(HandlerType.LOCAL_PORT);
-
         getLocalWIFIAddress();
     }
 
-    public void getLocalWIFIAddress(){
+    public void getLocalWIFIAddress() {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         int ipAddress = wifiInfo.getIpAddress();

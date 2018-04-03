@@ -3,10 +3,8 @@ package os.checkers.network2;
 import java.io.Serializable;
 
 public enum HandlerType implements Serializable {
-    LOCAL_HOST,
-    LOCAL_PORT,
-    REMOTE_HOST,
-    REMOTE_PORT,
+    LOCAL_PLAYER,
+    REMOTE_PLAYER,
     NO_PLAYER,
     SENT,
     ERROR,

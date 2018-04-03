@@ -11,60 +11,76 @@
 
     </LinearLayout>
 
-    <Button android:layout_width="match_parent"
+    <Button android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Make a move"
             android:id="@+id/move"
             android:onClick="move"
     />
-    <LinearLayout
+
+    <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-        <LinearLayout android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:orientation="horizontal">
-            <TextView android:layout_width="wrap_content"
-                      android:layout_height="match_parent"
-                      android:layout_weight="11"
-                      android:id="@+id/host"/>
-            <TextView android:layout_width="wrap_content"
-                      android:layout_height="match_parent"
-                      android:minWidth="2dp"
-                      android:layout_weight="1"
-                      android:id="@+id/port"/>
-            <Button android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="5"
-                    android:text="My data"
-                    android:id="@+id/local"
-                    android:onClick="local"/>
-        </LinearLayout>
-        <LinearLayout
-                android:layout_width="match_parent"
+            android:layout_gravity="center"
+            android:rowCount="2"
+            android:columnCount="10"
+            android:orientation="horizontal">
+        <Button android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-            <EditText
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="11"
-                    android:id="@+id/remotehost" />
+                android:text="Listen:"
+                android:id="@+id/local"
+                android:onClick="local"
+                android:layout_row="0"
+                android:layout_column="0"
+                android:layout_columnSpan="4"
+                android:layout_gravity="fill"/>
 
-            <EditText
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:minWidth="2dp"
-                    android:id="@+id/remoteport"/>
-            <Button android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="5"
-                    android:text="Connect"
-                    android:id="@+id/connect"
-                    android:onClick="connect"/>
-        </LinearLayout>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/localhost"
+                  android:layout_row="0"
+                  android:layout_column="4"
+                  android:layout_columnSpan="5"
+                  android:layout_gravity="fill"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/localport"
+                  android:minWidth="6dp"
+                  android:layout_row="0"
+                  android:layout_column="9"
+                  android:layout_columnSpan="1"/>
 
-    </LinearLayout>
+
+        <Button android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connect"
+                android:id="@+id/remote"
+                android:onClick="remote"
+                android:layout_row="1"
+                android:layout_column="0"
+                android:layout_columnSpan="4"
+                android:layout_gravity="fill"/>
+        <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/remotehost"
+                android:layout_row="1"
+                android:layout_column="4"
+                android:layout_columnSpan="5"
+                android:layout_gravity="fill"/>
+
+        <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/remoteport"
+                android:minWidth="6dp"
+                android:layout_row="1"
+                android:layout_column="9"
+                android:layout_columnSpan="1"
+                android:layout_gravity="fill"/>
+
+    </GridLayout>
+
 
     <LinearLayout
             android:layout_width="match_parent"
