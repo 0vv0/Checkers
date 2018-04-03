@@ -46,7 +46,7 @@ class Connection {
                     msg.append(buffer);
                 }
                 input.close();
-                outHandler.sendMessage(HandlerType.UPDATE_POSITION, msg.toString());
+                outHandler.updatePosition(msg.toString());
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
                 outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
@@ -87,7 +87,7 @@ class Connection {
                 outHandler.sendMessage(HandlerType.SENT, msg);
             } catch (IOException e) {
                 Log.e(TAG, "send position error: " + e.getMessage());
-                outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
+                outHandler.sendError(e.getMessage());
             }
             try {
                 if (out != null) {
@@ -96,8 +96,20 @@ class Connection {
                 socket.close();
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
-                outHandler.sendMessage(HandlerType.ERROR, e.getMessage());
+                outHandler.sendError(e.getMessage());
             }
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            if(socket!=null){
+                if(!socket.isClosed()){
+                    socket.close();
+                }
+                socket = null;
+            }
+            outHandler = null;
+            super.finalize();
         }
     }
 }

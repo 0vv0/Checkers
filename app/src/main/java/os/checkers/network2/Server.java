@@ -4,6 +4,7 @@ import android.support.constraint.BuildConfig;
 import android.util.Log;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -33,12 +34,14 @@ public class Server extends Thread {
             if (mServerSocket == null) {
                 mServerSocket = new ServerSocket(0, 2);
                 Log.d(TAG, "Will listen on: " + mServerSocket.getInetAddress().getHostName() + ":" + mServerSocket.getLocalPort());
-                outHandler.sendMessage(HandlerType.LOCAL_PLAYER, new Player(mServerSocket.getInetAddress().getHostName(), mServerSocket.getLocalPort()));
+                outHandler.sendMessage(HandlerType.LOCAL_PORT, mServerSocket.getLocalPort());
             }
             Log.d(TAG, "ServerSocket Created, awaiting connection");
             while (!isInterrupted()) {
                 Socket socket = mServerSocket.accept();
-                new Connection(outHandler).receiveFrom(socket);
+                Log.d(TAG, "incoming connection from " + socket.getInetAddress());
+                InetSocketAddress socketAddress = new InetSocketAddress(socket.getInetAddress(), socket.getPort());
+                outHandler.connectionRequest(socketAddress);
             }
         } catch (IOException e) {
             if (!this.isInterrupted()) {
