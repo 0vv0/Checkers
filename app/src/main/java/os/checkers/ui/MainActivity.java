@@ -17,7 +17,6 @@ import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
 import os.checkers.network2.HandlerType;
 import os.checkers.network2.MyHandler;
-import os.checkers.network2.Player;
 import os.checkers.network2.Server;
 
 import java.io.Serializable;
@@ -30,11 +29,12 @@ import java.util.Observer;
 public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer, Handler.Callback {
     private static final String TAG = MainActivity.class.getName();
 
-    private TextView host;
-    private TextView port;
+    private TextView localHost;
+    private TextView localPort;
     private EditText remoteHost;
     private EditText remotePort;
-    private Button connect;
+    private Button local;
+    private Button remote;
 
     private Server server;
 
@@ -46,11 +46,12 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        host = (TextView) findViewById(R.id.host);
-        port = (TextView) findViewById(R.id.port);
+        localHost = (TextView) findViewById(R.id.localhost);
+        localPort = (TextView) findViewById(R.id.localport);
         remoteHost = (EditText) findViewById(R.id.remotehost);
         remotePort = (EditText) findViewById(R.id.remoteport);
-        connect = (Button) findViewById(R.id.connect);
+        local = (Button) findViewById(R.id.local);
+        remote = (Button) findViewById(R.id.remote);
         Log.d(TAG, Thread.currentThread().getName() + " has been started");
     }
 
@@ -74,7 +75,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             }
             server = null;
         }
-        connect.setSelected(false);
+        local.setSelected(false);
 
         Field.getInstance().deleteObserver(this);
 
@@ -180,7 +181,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             Field.getInstance().move(coordinates);
 
             Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
-            if (connect.isSelected()) {
+            if (local.isSelected()) {
 
             }
         }
@@ -221,12 +222,8 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         Serializable data = msg.getData().getSerializable(type.name());
 
         switch (type) {
-            case LOCAL_PLAYER:
-                host.setText(((Player)data).getHostName());
-                port.setText(((Player)data).getHostPort());
-                break;
             case NO_PLAYER:
-                connect.setSelected(false);
+                local.setSelected(false);
                 break;
             case SENT:
                 Toast.makeText(this, "Position has been sent", Toast.LENGTH_LONG).show();

@@ -6,7 +6,6 @@
     <uses-permission
             android:name="android.permission.ACCESS_WIFI_STATE"
             android:required="true"/>
-    <!-- <uses-permission android:required="true" android:name="android.permission.CHANGE_WIFI_STATE" /> -->
     <uses-permission
             android:name="android.permission.INTERNET"
             android:required="true"/>
@@ -28,25 +27,22 @@
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="os.checkers.UPDATE_POSITION"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="os.checkers.REMOTE_PLAYER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="os.checkers.LOCAL_PORT"/>
+            </intent-filter>
         </activity>
 
-        <!-- <service -->
-        <!-- android:name=".network.PlayerService" -->
-        <!-- android:exported="false"> -->
-        <!-- <intent-filter> -->
-        <!-- <category android:name="os.checkers.network.PlayerService"/> -->
-        <!-- </intent-filter> -->
-        <!-- </service> -->
-        <!-- <service -->
-        <!-- android:name=".network2.RemotePlayer" -->
-        <!-- android:enabled="true" -->
-        <!-- android:exported="false"> -->
-        <!-- </service> -->
-        <service
-                android:name=".network2.MyService"
-                android:enabled="true"
-                android:exported="false">
-        </service>
+        <!--<service-->
+                <!--android:name=".network2.MyService"-->
+                <!--android:enabled="true"-->
+                <!--android:exported="false">-->
+        <!--</service>-->
     </application>
 
 </manifest>

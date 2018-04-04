@@ -23,61 +23,56 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:rowCount="2"
-            android:columnCount="10"
+            android:columnCount="3"
             android:orientation="horizontal">
         <Button android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:text="Listen:"
                 android:id="@+id/local"
                 android:onClick="local"
                 android:layout_row="0"
                 android:layout_column="0"
-                android:layout_columnSpan="4"
-                android:layout_gravity="fill"/>
+                android:layout_gravity="start"/>
 
         <TextView android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
+                  android:layout_height="match_parent"
                   android:id="@+id/localhost"
                   android:layout_row="0"
-                  android:layout_column="4"
-                  android:layout_columnSpan="5"
+                  android:layout_column="1"
                   android:layout_gravity="fill"/>
         <TextView android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
+                  android:layout_height="match_parent"
                   android:id="@+id/localport"
                   android:minWidth="6dp"
                   android:layout_row="0"
-                  android:layout_column="9"
-                  android:layout_columnSpan="1"/>
+                  android:layout_column="2"
+                  android:layout_gravity="end"/>
 
 
         <Button android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:text="Connect"
                 android:id="@+id/remote"
                 android:onClick="remote"
                 android:layout_row="1"
                 android:layout_column="0"
-                android:layout_columnSpan="4"
-                android:layout_gravity="fill"/>
+                android:layout_gravity="start"/>
         <EditText
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:id="@+id/remotehost"
                 android:layout_row="1"
-                android:layout_column="4"
-                android:layout_columnSpan="5"
+                android:layout_column="1"
                 android:layout_gravity="fill"/>
 
         <EditText
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:id="@+id/remoteport"
                 android:minWidth="6dp"
                 android:layout_row="1"
-                android:layout_column="9"
-                android:layout_columnSpan="1"
-                android:layout_gravity="fill"/>
+                android:layout_column="2"
+                android:layout_gravity="end"/>
 
     </GridLayout>
 
