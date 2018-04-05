@@ -2,4 +2,5 @@
     <string name="app_name">Checkers</string>
     <string name="permlab_allowOverWifi">Allow to use WiFi for multiuser game</string>
     <string name="permdesc_allowOverWifi">Allows the app to use WiFi for PvP game</string>
+    <string name="disconnected">DIS</string>
 </resources>

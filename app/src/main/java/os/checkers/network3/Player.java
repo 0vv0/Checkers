@@ -1,11 +1,8 @@
-package os.checkersnetworkplayer;
+package os.checkers.network3;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.IBinder;
-import android.os.Message;
+import android.os.*;
 import android.util.Log;
 
 import java.io.*;
@@ -27,16 +24,17 @@ public class Player extends Service {
     private Socket pSocket;
     private int pPort = -1;
 
+    private final IBinder pBinder;
 
     public Player() {
         Log.d(TAG, "Construct()");
         pServer = new Server();
+        pBinder = new PlayerBinder();
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return pBinder;
     }
 
     @Override
@@ -294,6 +292,12 @@ public class Player extends Service {
                     }
                 }
             }
+        }
+    }
+
+    public class PlayerBinder extends Binder {
+        public Player getService(){
+            return Player.this;
         }
     }
 }

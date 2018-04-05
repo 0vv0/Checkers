@@ -63,3 +63,5 @@ freeline_project_description.json
 /.idea/modules.xml
 /.idea/vcs.xml
 /.idea/misc.xml
+.idea/inspectionProfiles/
+src/main/res/drawable/
