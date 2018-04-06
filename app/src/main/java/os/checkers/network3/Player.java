@@ -13,11 +13,22 @@ public class Player extends Service {
     public static final int SEND_POSITION = 0;
     private static final String PREFIX = "os.checkers.";
 
-    public static final String UPDATE_POSITION = PREFIX + "UPDATE_POSITION";
-    public static final String REMOTE_PLAYER = PREFIX + "REMOTE_PLAYER";
-    public static final String REMOTE_PORT = PREFIX + "REMOTE_PORT";
-    public static final String LOCAL_PORT = PREFIX + "LOCAL_PORT";
-    public static final String RESTART_SERVICE = PREFIX + "RESTART_SERVICE";
+    public enum IntentAction {
+        UPDATE_POSITION,
+        REMOTE_PLAYER,
+        REMOTE_PORT,
+        LOCAL_PORT,
+        RESTART_SERVICE;
+
+        public static boolean contains(String action) {
+            for (IntentAction intentAction : values()) {
+                if (intentAction.name().equals(action)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
     private Server pServer;
     private Client pClient;
@@ -34,7 +45,14 @@ public class Player extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.d(TAG, "bind(" + intent + ")");
         return pBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "bind(" + intent + ")");
+        return super.onUnbind(intent);
     }
 
     @Override
@@ -43,46 +61,49 @@ public class Player extends Service {
             return super.onStartCommand(intent, flags, startId);
         }
         Log.d(TAG, "onStartCommand()");
-        String action = intent.getAction();
-        switch (action) {
-            case UPDATE_POSITION:
-                sendPosition(intent.getStringExtra(action));
-                break;
-            case REMOTE_PLAYER:
-                try {
-                    String s = intent.getStringExtra(REMOTE_PLAYER);
-                    int port = intent.getIntExtra(REMOTE_PORT, -1);
-                    if (pClient == null
-                            && 0 < port && port <= 65535
-                            && s != null) {
-                        InetAddress address = InetAddress.getByName(s);
-                        pClient = new Client(address, port);
-                    }
+        if (IntentAction.contains(intent.getAction())) {
+            IntentAction action = IntentAction.valueOf(intent.getAction());
+            switch (action) {
+                case UPDATE_POSITION:
+                    sendPosition(intent.getStringExtra(action.name()));
+                    break;
+                case REMOTE_PLAYER:
+                    try {
+                        String s = intent.getStringExtra(action.name());
+                        int port = intent.getIntExtra(IntentAction.REMOTE_PORT.name(), -1);
+                        if (pClient == null
+                                && 0 < port && port <= 65535
+                                && s != null) {
+                            InetAddress address = InetAddress.getByName(s);
+                            pClient = new Client(address, port);
+                        }
 
-                } catch (UnknownHostException e) {
-                    Log.d(TAG, "uhe\n" + e);
-                } catch (IOException e) {
-                    Log.d(TAG, "ioe\n" + e);
-                }
-                break;
-            case LOCAL_PORT:
-                if (-1 < pPort) {
-                    Intent portIntent = new Intent(LOCAL_PORT);
-                    intent.putExtra(LOCAL_PORT, pPort);
-                    sendBroadcast(portIntent);
-                }
-                break;
-            case RESTART_SERVICE:
-                stopSelf();
-                break;
+                    } catch (UnknownHostException e) {
+                        Log.d(TAG, "uhe\n" + e);
+                    } catch (IOException e) {
+                        Log.d(TAG, "ioe\n" + e);
+                    }
+                    break;
+                case LOCAL_PORT:
+                    if (-1 < pPort) {
+                        Intent portIntent = new Intent(action.name());
+                        intent.putExtra(action.name(), pPort);
+                        sendBroadcast(portIntent);
+                    }
+                    break;
+                case RESTART_SERVICE:
+                    stopSelf();
+                    break;
+            }
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        Log.d(TAG, "onDestroy()");
         tearDown();
+        super.onDestroy();
     }
 
     public void tearDown() {
@@ -93,6 +114,7 @@ public class Player extends Service {
     }
 
     public void connectToServer(InetAddress address, int port) throws IOException {
+        Log.d(TAG, "connectToServer:" + address + ":" + port);
         pClient = new Client(address, port);
     }
 
@@ -206,7 +228,7 @@ public class Player extends Service {
         private Handler cHandler;
 
         Client(InetAddress address, int port) throws IOException {
-            Log.d(TAG, "Construct()");
+            Log.d(TAG, "Construct(" + address + ":" + port + ")");
             cAddress = address;
             cPort = port;
             if (getSocket() == null) {
@@ -222,10 +244,10 @@ public class Player extends Service {
             cReceiveThread = new Thread(new ReceiverThread(getSocket().getInputStream()));
             cReceiveThread.start();
 
-            Intent intent = new Intent(REMOTE_PLAYER);
+            Intent intent = new Intent(IntentAction.REMOTE_PLAYER.name());
             intent.addCategory(TAG);
-            intent.putExtra(REMOTE_PLAYER, address.getHostAddress());
-            intent.putExtra(REMOTE_PORT, port);
+            intent.putExtra(IntentAction.REMOTE_PLAYER.name(), address.getHostAddress());
+            intent.putExtra(IntentAction.REMOTE_PORT.name(), port);
             sendBroadcast(intent);
         }
 
@@ -286,7 +308,7 @@ public class Player extends Service {
                         do {
                             sb.append(in.readLine());
                         } while (in.ready());
-                        sendBroadcast(UPDATE_POSITION, sb.toString());
+                        sendBroadcast(IntentAction.UPDATE_POSITION.name(), sb.toString());
                     } catch (IOException e) {
                         Log.d(TAG, "read position error\n" + e);
                     }
@@ -296,7 +318,7 @@ public class Player extends Service {
     }
 
     public class PlayerBinder extends Binder {
-        public Player getService(){
+        public Player getService() {
             return Player.this;
         }
     }

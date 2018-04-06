@@ -7,22 +7,19 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+import os.checkers.BuildConfig;
 import os.checkers.R;
 import os.checkers.model.Color;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Field;
-import os.checkers.network2.HandlerType;
 import os.checkers.network3.Player;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -32,7 +29,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer, Handler.Callback {
+public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
     private static final String TAG = MainActivity.class.getName();
     private static final String DISCONNECTED = "DIS";
 
@@ -87,6 +84,7 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         super.onResume();
         Field.getInstance().addObserver(this);
         load(null);
+        bindService(pIntentToService, pConnectionToService, 0);
     }
 
     @Override
@@ -198,14 +196,17 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             Field.getInstance().move(coordinates);
 
             Toast.makeText(this, "sending position...", Toast.LENGTH_SHORT).show();
-            if (local.isSelected()) {
-
+            if (remote.isSelected()) {
+                sendPosition();
             }
         }
     }
 
     void sendPosition() {
-
+        Intent intent = new Intent(pIntentToService);
+        intent.setAction(Player.IntentAction.UPDATE_POSITION.name());
+        intent.putExtra(Player.IntentAction.UPDATE_POSITION.name(), Field.getInstance().getJson());
+        sendBroadcast(intent);
     }
 
     @Override
@@ -213,44 +214,26 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
         getMainLayout();
     }
 
-    @Override
-    public boolean handleMessage(Message msg) {
-        if (msg.what < 0 || msg.what > HandlerType.values().length - 1) {
-            return false;
-        }
-        HandlerType type = HandlerType.values()[msg.what];
-        Serializable data = msg.getData().getSerializable(type.name());
-
-        switch (type) {
-            case NO_PLAYER:
-                local.setSelected(false);
-                break;
-            case SENT:
-                Toast.makeText(this, "Position has been sent", Toast.LENGTH_LONG).show();
-                break;
-            case ERROR:
-                Toast.makeText(this, (String) data, Toast.LENGTH_LONG).show();
-                break;
-            case UPDATE_POSITION:
-                Field.fromJson((String) data);
-                break;
-        }
-
-        return false;
-    }
-
-    private void fillLocalInetAddressPort(){
+    private void fillLocalInetAddressPort() {
         localHost.setText(getLocalWIFIAddress());
-        if(pPlayerService!=null) {
+        if (pPlayerService != null) {
             localPort.setText(String.valueOf(pPlayerService.getLocalPort()));
+//            if (BuildConfig.DEBUG) {
+//                remoteHost.setText("127.0.0.1");
+//                remotePort.setText(localPort.getText());
+//            }
         } else {
             localPort.setText(DISCONNECTED);
         }
     }
+
     public void local(View v) {
         Log.d(TAG, "request localhost data");
-        if(pPlayerService!=null){
+        if (pPlayerService != null) {
 
+            fillLocalInetAddressPort();
+        } else {
+            bindService(pIntentToService, pConnectionToService, BIND_AUTO_CREATE);
         }
     }
 
@@ -260,10 +243,32 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
             unbindService(pConnectionToService);
         } else {
 
-            if (remoteHost.getText().toString().isEmpty() || remotePort.getText().toString().isEmpty()) {
+            if (remoteHost.getText().toString().isEmpty() || remotePort.getText().toString().isEmpty() || remotePort.getText().toString().equals(DISCONNECTED)) {
                 Toast.makeText(this, "HOST or PORT not set", Toast.LENGTH_LONG).show();
                 return;
             }
+            if (BuildConfig.DEBUG) {
+                final Player localEnemy = new Player();
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            localEnemy.connectToServer(
+                                    InetAddress.getByName(remoteHost.getText().toString()),
+                                    Integer.valueOf(remotePort.getText().toString())
+                            );
+                        } catch (IOException e) {
+                            Log.d(TAG, "incorrect InetAddress or Port" + e);
+                        } catch (IllegalStateException e) {
+                            Log.d(TAG, "sync error" + e);
+                        }
+                    }
+                });
+
+
+                return;
+            }
+
             if (pPlayerService != null) {
                 try {
                     pPlayerService
@@ -271,14 +276,15 @@ public class MainActivity extends Activity implements ViewWithChecker.OnClickLis
                                     InetAddress.getByName(remoteHost.getText().toString()),
                                     Integer.valueOf(remotePort.getText().toString())
                             );
+                    v.setSelected(true);
                 } catch (IOException e) {
-                    Log.d(TAG, "incorrect InetAddress or Port");
+                    Log.d(TAG, "incorrect InetAddress or Port" + e);
                 }
             }
         }
     }
 
-    String getLocalWIFIAddress() {
+    private String getLocalWIFIAddress() {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 
