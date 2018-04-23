@@ -62,7 +62,7 @@ public class MVPActivity extends Activity implements MVP.View, View.OnClickListe
                 TextView view = new ViewCell(this, row, column);
                 if (!state[row][column].isWhite()) {
                     view.setBackgroundColor(android.graphics.Color.DKGRAY);
-//                    view.setOnClickListener(this);
+                    view.setOnClickListener(this);
                     if (state[row][column].hasWhite() != null) {
                         view.setTextColor(state[row][column].hasWhite()
                                 ? Color.WHITE
@@ -71,10 +71,13 @@ public class MVPActivity extends Activity implements MVP.View, View.OnClickListe
                                 ? getString(R.string.checker)
                                 : getString(R.string.king));
                     }
+                    if(state[row][column].isSelected()){
+                        view.setSelected(true);
+                    }
                 } else {
                     view.setBackgroundColor(android.graphics.Color.LTGRAY);
                 }
-                view.setOnClickListener(this);
+
                 gridLayout.addView(view, convertToIndex(row, column, state.length));
             }
         }

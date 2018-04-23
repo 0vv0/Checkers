@@ -6,14 +6,11 @@ import android.widget.Toast;
 import os.checkers.model.Color;
 import os.checkers.model.Field;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.*;
 
 import static android.content.Context.MODE_PRIVATE;
 
-class Presenter implements MVP.Presenter, Observer{
+class Presenter implements MVP.Presenter, Observer {
     @SuppressWarnings("WeakerAccess")
     static final String AUTOSAVE = "_Autosave";
     @SuppressWarnings("WeakerAccess")
@@ -28,7 +25,7 @@ class Presenter implements MVP.Presenter, Observer{
 
     private final Field gameField = Field.getInstance();
     private Color player;
-    private final List<State> selected = new ArrayList<>(13);// 12 checkers+1 cell
+    private final List<Pair> selected = new ArrayList<>(13);// 12 checkers+1 cell
 
     Presenter(Context context, MVP.View view) {
         this.view = view;
@@ -66,7 +63,7 @@ class Presenter implements MVP.Presenter, Observer{
     }
 
     private void saveGame(String name) {
-        if(player!=null) {
+        if (player != null) {
             SharedPreferences.Editor editor = context.getSharedPreferences(DEFAULT_SAVE_NAME, MODE_PRIVATE).edit();
             editor.putString(FIELD_PREFIX + name, gameField.getJson());
             editor.putString(PLAYER_PREFIX + name, player.name());
@@ -102,16 +99,16 @@ class Presenter implements MVP.Presenter, Observer{
         view.show(getConvertedField(gameField, selected));
     }
 
-    private static State[][] getConvertedField(final Field field, final List<State> selected){
+    private static State[][] getConvertedField(final Field field, final List<Pair> selected) {
         State[][] state = new State[field.size()][field.size()];
-        for (int i = 0; i <field.size() ; i++) {
-            for (int j = 0; j < field.size() ; j++) {
+        for (int i = 0; i < field.size(); i++) {
+            for (int j = 0; j < field.size(); j++) {
                 final int row = i;
                 final int column = j;
                 state[i][j] = new State() {
                     @Override
                     public boolean isSelected() {
-                        return selected!=null&&selected.contains(this);
+                        return selected != null && selected.contains(new Pair(row, column));
                     }
 
                     @Override
@@ -121,18 +118,57 @@ class Presenter implements MVP.Presenter, Observer{
 
                     @Override
                     public Boolean hasWhite() {
-                        return field.get(row, column).isEmpty()?null:field.get(row, column).getChecker().isWhite();
+                        return field.get(row, column).isEmpty() ? null : field.get(row, column).getChecker().isWhite();
                     }
 
                     @Override
                     public Boolean hasWhiteKing() {
-                        return field.get(row, column).isEmpty()||!field.get(row,column).getChecker().isKing()
-                                ?null
-                                :field.get(row, column).getChecker().isWhite();
+                        return field.get(row, column).isEmpty() || !field.get(row, column).getChecker().isKing()
+                                ? null
+                                : field.get(row, column).getChecker().isWhite();
+                    }
+
+                    @Override
+                    public boolean equals(Object obj) {
+                        if (obj == null) {
+                            return false;
+                        }
+                        if (!(obj instanceof State)) {
+                            return false;
+                        }
+
+                        return ((State) obj).hasWhite().equals(hasWhite()) &&
+                                ((State) obj).isWhite() == isWhite() &&
+                                ((State) obj).hasWhiteKing().equals(hasWhiteKing()) &&
+                                ((State) obj).isSelected() == isSelected();
                     }
                 };
             }
         }
         return state;
+    }
+    private static final class Pair{
+        int row;
+        int column;
+
+        public Pair(int row, int column) {
+            this.row = row;
+            this.column = column;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Pair pair = (Pair) o;
+            return row == pair.row &&
+                    column == pair.column;
+        }
+
+        @Override
+        public int hashCode() {
+
+            return row*64+column;
+        }
     }
 }
