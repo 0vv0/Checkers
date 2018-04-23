@@ -22,23 +22,23 @@
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
-            android:theme="@style/AppTheme">
-        <activity android:name=".ui.MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+            android:theme="@style/Theme.AppCompat">
+        <!--<activity android:name=".ui.MainActivity">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN"/>-->
 
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="os.checkers.UPDATE_POSITION"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="os.checkers.REMOTE_PLAYER"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="os.checkers.LOCAL_PORT"/>
-            </intent-filter>
-        </activity>
+                <!--<category android:name="android.intent.category.LAUNCHER"/>-->
+            <!--</intent-filter>-->
+            <!--<intent-filter>-->
+                <!--<action android:name="os.checkers.UPDATE_POSITION"/>-->
+            <!--</intent-filter>-->
+            <!--<intent-filter>-->
+                <!--<action android:name="os.checkers.REMOTE_PLAYER"/>-->
+            <!--</intent-filter>-->
+            <!--<intent-filter>-->
+                <!--<action android:name="os.checkers.LOCAL_PORT"/>-->
+            <!--</intent-filter>-->
+        <!--</activity>-->
 
         <service
                 android:name=".network3.Player"
@@ -55,6 +55,14 @@
                 android:enabled="true"
                 android:exported="false">
         </service>
+
+        <activity android:name=".mvp.MVPActivity">
+            <intent-filter>
+            <action android:name="android.intent.action.MAIN"/>
+
+            <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

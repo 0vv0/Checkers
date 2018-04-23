@@ -3,4 +3,13 @@
     <string name="permlab_allowOverWifi">Allow to use WiFi for multiuser game</string>
     <string name="permdesc_allowOverWifi">Allows the app to use WiFi for PvP game</string>
     <string name="disconnected">DIS</string>
+    <string name="exit">Exit</string>
+    <string name="restart">Restart</string>
+    <string name="move">Make a move</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="make_a_move">Make a move</string>
+    <string name="checker">Ο</string>
+    <string name="king">ʘ</string>
 </resources>

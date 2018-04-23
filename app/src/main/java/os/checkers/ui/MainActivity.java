@@ -1,6 +1,5 @@
 package os.checkers.ui;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -8,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-public class MainActivity extends Activity implements ViewWithChecker.OnClickListener, Observer {
+public class MainActivity extends AppCompatActivity implements ViewWithChecker.OnClickListener, Observer {
     private static final String TAG = MainActivity.class.getName();
     private static final String DISCONNECTED = "DIS";
 

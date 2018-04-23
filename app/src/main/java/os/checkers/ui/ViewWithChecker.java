@@ -3,13 +3,13 @@ package os.checkers.ui;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.support.v7.widget.AppCompatButton;
 import android.view.View;
-import android.widget.Button;
 import os.checkers.model.Checker;
 import os.checkers.model.Coordinate;
 import os.checkers.model.Square;
 
-class ViewWithChecker extends Button {
+class ViewWithChecker extends AppCompatButton {
     public ViewWithChecker(Context context) {
         super(context);
     }

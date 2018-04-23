@@ -6,10 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Observable;
+import java.util.*;
 
 public class Field extends Observable implements Serializable {
     /**
@@ -31,6 +28,10 @@ public class Field extends Observable implements Serializable {
             })
             .create();
 
+    public Square[][] getField() {
+        return field.clone();
+    }
+
     private Square[][] field;
     private Color player;
 
@@ -42,13 +43,14 @@ public class Field extends Observable implements Serializable {
         return ourInstance;
     }
 
-    public static void fromJson(String serializedToString) {
+    public static Field fromJson(String serializedToString) {
         Field f = gson.fromJson(serializedToString, Field.class);
         if(!getInstance().equals(f)) {
             getInstance().field = f.field;
             getInstance().player = f.player;
             getInstance().notifyObservers();
         }
+        return getInstance();
     }
 
     public String getJson() {
@@ -77,7 +79,9 @@ public class Field extends Observable implements Serializable {
     public Square get(Coordinate coordinate) {
         return field[coordinate.getRow()][coordinate.getColumn()];
     }
-
+    public Square get(int row, int column) {
+        return field[row][column];
+    }
     private void initFieldWithSquares() {
         Color squareColorStartedCurrent = Color.White;
         for (int i = 0; i < size(); i++) {
