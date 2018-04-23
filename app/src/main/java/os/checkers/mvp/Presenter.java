@@ -6,6 +6,8 @@ import android.widget.Toast;
 import os.checkers.model.Color;
 import os.checkers.model.Field;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -24,8 +26,9 @@ class Presenter implements MVP.Presenter, Observer{
     private final MVP.View view;
     private final Context context;
 
-    private Field gameField = Field.getInstance();
+    private final Field gameField = Field.getInstance();
     private Color player;
+    private final List<State> selected = new ArrayList<>(13);// 12 checkers+1 cell
 
     Presenter(Context context, MVP.View view) {
         this.view = view;
@@ -52,11 +55,14 @@ class Presenter implements MVP.Presenter, Observer{
     @Override
     public void move() {
         Toast.makeText(context, "move", Toast.LENGTH_LONG).show();
+
     }
 
     @Override
     public void click(int row, int column) {
-        Toast.makeText(context, "[" + row + ", " + column + "]", Toast.LENGTH_LONG).show();
+        Toast.makeText(context, "[" + row + ", " + column + "]", Toast.LENGTH_SHORT).show();
+
+
     }
 
     private void saveGame(String name) {
@@ -93,16 +99,21 @@ class Presenter implements MVP.Presenter, Observer{
 
     @Override
     public void update(Observable o, Object arg) {
-        view.show(getConvertedField(gameField));
+        view.show(getConvertedField(gameField, selected));
     }
 
-    private static State[][] getConvertedField(final Field field){
+    private static State[][] getConvertedField(final Field field, final List<State> selected){
         State[][] state = new State[field.size()][field.size()];
         for (int i = 0; i <field.size() ; i++) {
             for (int j = 0; j < field.size() ; j++) {
                 final int row = i;
                 final int column = j;
                 state[i][j] = new State() {
+                    @Override
+                    public boolean isSelected() {
+                        return selected!=null&&selected.contains(this);
+                    }
+
                     @Override
                     public boolean isWhite() {
                         return field.get(row, column).isWhite();

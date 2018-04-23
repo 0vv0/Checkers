@@ -21,6 +21,7 @@ public interface MVP {
         void click(int row, int column);
 
         interface State {
+            boolean isSelected();
             boolean isWhite();
             Boolean hasWhite();
             Boolean hasWhiteKing();
