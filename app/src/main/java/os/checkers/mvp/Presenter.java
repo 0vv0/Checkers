@@ -40,18 +40,18 @@ class Presenter implements MVP.Presenter, Observer{
 
     @Override
     public void onResume() {
-        loadGame(AUTOSAVE);
         gameField.addObserver(this);
+        loadGame(AUTOSAVE);
     }
 
     @Override
     public void newGame() {
-
+        Toast.makeText(context, "new", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void move() {
-
+        Toast.makeText(context, "move", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -60,10 +60,12 @@ class Presenter implements MVP.Presenter, Observer{
     }
 
     private void saveGame(String name) {
-        SharedPreferences.Editor editor = context.getSharedPreferences(DEFAULT_SAVE_NAME, MODE_PRIVATE).edit();
-        editor.putString(FIELD_PREFIX + name, gameField.getJson());
-        editor.putString(PLAYER_PREFIX + name, player.name());
-        editor.apply();
+        if(player!=null) {
+            SharedPreferences.Editor editor = context.getSharedPreferences(DEFAULT_SAVE_NAME, MODE_PRIVATE).edit();
+            editor.putString(FIELD_PREFIX + name, gameField.getJson());
+            editor.putString(PLAYER_PREFIX + name, player.name());
+            editor.apply();
+        }
     }
 
     private void loadGame(String name) {

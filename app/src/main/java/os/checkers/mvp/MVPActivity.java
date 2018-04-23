@@ -1,20 +1,21 @@
 package os.checkers.mvp;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatButton;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import os.checkers.R;
 
-public class MVPActivity extends AppCompatActivity implements MVP.View, View.OnClickListener {
+public class MVPActivity extends Activity implements MVP.View, View.OnClickListener {
 
     private MVP.Presenter presenter;
 
@@ -53,7 +54,6 @@ public class MVPActivity extends AppCompatActivity implements MVP.View, View.OnC
 
     private GridLayout generateRootGridLayout(MVP.Presenter.State[][] state) {
         GridLayout gridLayout = new GridLayout(this);
-        gridLayout.setOnClickListener(this);
         gridLayout.setRowCount(state.length);
         gridLayout.setColumnCount(state.length);
 
@@ -74,6 +74,7 @@ public class MVPActivity extends AppCompatActivity implements MVP.View, View.OnC
                 } else {
                     view.setBackgroundColor(android.graphics.Color.LTGRAY);
                 }
+                view.setOnClickListener(this);
                 gridLayout.addView(view, convertToIndex(row, column, state.length));
             }
         }
@@ -127,16 +128,14 @@ public class MVPActivity extends AppCompatActivity implements MVP.View, View.OnC
 
     @Override
     public void onClick(View v) {
-        if (v instanceof GridLayout) {
-            GridLayout gl = (GridLayout) v;
-            if(gl.getFocusedChild() instanceof ViewCell){
-                ViewCell viewCell = (ViewCell)gl.getFocusedChild();
+//        Toast.makeText(this, "onClick", Toast.LENGTH_SHORT).show();
+        if (v instanceof ViewCell) {
+                ViewCell viewCell = (ViewCell)v;
                 presenter.click(viewCell.row, viewCell.column);
-            }
         }
     }
 
-    static class ViewCell extends AppCompatButton {
+    static class ViewCell extends Button {
         ViewCell(Context context, AttributeSet attrs) {
             super(context, attrs);
             this.row = attrs.getAttributeIntValue(0, -1);
